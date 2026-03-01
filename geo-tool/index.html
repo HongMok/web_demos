@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO 分析工具 - AI 平台推荐可见度检测</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --primary-dark: #3730A3;
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --text: #1E293B;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .card .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Input Section */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-group .hint {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Tags */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            min-height: 36px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #EEF2FF;
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .tag .remove-tag {
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .tag .remove-tag:hover {
+            opacity: 1;
+        }
+
+        .tag-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tag-input-row input {
+            flex: 1;
+        }
+
+        .btn-add {
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: var(--primary-dark);
+        }
+
+        /* AI Platform Selection */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .platform-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .platform-item:hover {
+            border-color: var(--primary-light);
+            background: #FAFAFE;
+        }
+
+        .platform-item.selected {
+            border-color: var(--primary);
+            background: #EEF2FF;
+        }
+
+        .platform-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .platform-check {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .platform-item.selected .platform-check {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .platform-check svg {
+            width: 12px;
+            height: 12px;
+            fill: none;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .platform-item.selected .platform-check svg {
+            opacity: 1;
+        }
+
+        .platform-icon {
+            font-size: 1.4rem;
+        }
+
+        .platform-info {
+            flex: 1;
+        }
+
+        .platform-info .name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .platform-info .desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        /* Query Template */
+        .query-section {
+            margin-top: 16px;
+        }
+
+        .query-section label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .query-templates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .query-template-btn {
+            padding: 6px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            background: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .query-template-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .query-template-btn.active {
+            border-color: var(--primary);
+            background: #EEF2FF;
+            color: var(--primary);
+        }
+
+        /* Generate Button */
+        .btn-generate {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(79,70,229,0.4);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Report */
+        #report-section {
+            display: none;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .report-header h2 {
+            margin-bottom: 0;
+        }
+
+        .report-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 20px 12px;
+            background: var(--bg);
+            border-radius: 10px;
+        }
+
+        .summary-item .number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .summary-item .label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .color-success { color: var(--success); }
+        .color-warning { color: var(--warning); }
+        .color-danger { color: var(--danger); }
+        .color-info { color: var(--info); }
+
+        /* Result Table */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .result-table th,
+        .result-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-table th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        .result-table tbody tr:hover {
+            background: #FAFAFE;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .badge-mentioned {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge-recommended {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .badge-top {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-not-found {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .rank-cell {
+            font-weight: 600;
+        }
+
+        .product-cell {
+            font-weight: 500;
+        }
+
+        .product-cell.is-self {
+            color: var(--primary);
+        }
+
+        .product-cell.is-competitor {
+            color: var(--text-secondary);
+        }
+
+        /* Detail Rows */
+        .detail-toggle {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+
+        .detail-content {
+            display: none;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-content.show {
+            display: table-row;
+        }
+
+        .detail-content td {
+            padding: 16px;
+        }
+
+        .ai-response-preview {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 8px;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar-wrap {
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 8px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .progress-status {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            margin-top: 24px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bar-label {
+            width: 120px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .bar-track {
+            flex: 1;
+            background: var(--border);
+            border-radius: 6px;
+            height: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 0.8rem;
+            color: white;
+            font-weight: 600;
+            min-width: fit-content;
+        }
+
+        .bar-self {
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        }
+
+        .bar-competitor {
+            background: linear-gradient(90deg, #94A3B8, #CBD5E1);
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Platform Detail Cards */
+        .platform-detail-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .platform-detail-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .platform-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: var(--bg);
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .platform-detail-header:hover {
+            background: #EEF2FF;
+        }
+
+        .platform-detail-header .arrow {
+            margin-left: auto;
+            transition: transform 0.2s;
+        }
+
+        .platform-detail-header.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .platform-detail-body {
+            display: none;
+            padding: 18px;
+        }
+
+        .platform-detail-body.show {
+            display: block;
+        }
+
+        .query-used {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--bg);
+            border-radius: 6px;
+        }
+
+        .query-used strong {
+            color: var(--text);
+        }
+
+        .product-mention-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .product-mention-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .product-mention-item .product-name {
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .platform-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bar-label {
+                width: 80px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* API Key Section */
+        .api-key-section {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+
+        .api-key-section h3 {
+            font-size: 0.95rem;
+            color: #92400E;
+            margin-bottom: 8px;
+        }
+
+        .api-key-section p {
+            font-size: 0.85rem;
+            color: #A16207;
+            margin-bottom: 12px;
+        }
+
+        .api-key-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .api-key-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-key-item label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        .api-key-item input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #FDE68A;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .api-key-item input:focus {
+            border-color: var(--primary-light);
+        }
+
+        /* Export Button */
+        .btn-export {
+            padding: 8px 18px;
+            background: white;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-export:hover {
+            background: #EEF2FF;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 8px 18px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            border-color: var(--primary);
+            background: #EEF2FF;
+            color: var(--primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>GEO 分析工具</h1>
+    <p>检测你的产品在各大 AI 平台中的推荐可见度</p>
+</div>
+
+<div class="container">
+
+    <!-- Mode Selection -->
+    <div class="card">
+        <h2>分析模式</h2>
+        <p class="subtitle">选择使用模拟数据演示或接入真实 API 进行分析</p>
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="demo" onclick="switchMode('demo')">演示模式</button>
+            <button class="mode-btn" data-mode="api" onclick="switchMode('api')">API 模式</button>
+        </div>
+        <div id="api-key-area" style="display:none;">
+            <div class="api-key-section">
+                <h3>API 密钥配置</h3>
+                <p>输入你在各平台的 API Key，仅在浏览器本地使用，不会上传到任何服务器。</p>
+                <div class="api-key-grid">
+                    <div class="api-key-item">
+                        <label>OpenAI:</label>
+                        <input type="password" id="key-openai" placeholder="sk-...">
+                    </div>
+                    <div class="api-key-item">
+                        <label>Anthropic:</label>
+                        <input type="password" id="key-anthropic" placeholder="sk-ant-...">
+                    </div>
+                    <div class="api-key-item">
+                        <label>Google AI:</label>
+                        <input type="password" id="key-google" placeholder="AIza...">
+                    </div>
+                    <div class="api-key-item">
+                        <label>xAI (Grok):</label>
+                        <input type="password" id="key-xai" placeholder="xai-...">
+                    </div>
+                    <div class="api-key-item">
+                        <label>DeepSeek:</label>
+                        <input type="password" id="key-deepseek" placeholder="sk-...">
+                    </div>
+                    <div class="api-key-item">
+                        <label>Perplexity:</label>
+                        <input type="password" id="key-perplexity" placeholder="pplx-...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Input -->
+    <div class="card">
+        <h2>你的产品</h2>
+        <p class="subtitle">输入你想要检测的产品名称和简介</p>
+        <div class="input-group">
+            <label>产品名称</label>
+            <input type="text" id="product-name" placeholder="例如：Notion">
+        </div>
+        <div class="input-group">
+            <label>产品简介（可选）</label>
+            <textarea id="product-desc" rows="2" placeholder="简要描述你的产品功能，帮助生成更精准的查询"></textarea>
+        </div>
+    </div>
+
+    <!-- Competitors -->
+    <div class="card">
+        <h2>竞品列表</h2>
+        <p class="subtitle">添加你想要对比的竞争产品</p>
+        <div class="tag-input-row">
+            <input type="text" id="competitor-input" placeholder="输入竞品名称，按回车或点击添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addCompetitor();}">
+            <button class="btn-add" onclick="addCompetitor()">+ 添加</button>
+        </div>
+        <div class="tags-container" id="competitor-tags"></div>
+        <p class="hint">建议添加 2-5 个主要竞品</p>
+    </div>
+
+    <!-- AI Platform Selection -->
+    <div class="card">
+        <h2>选择 AI 平台</h2>
+        <p class="subtitle">选择你想要检测的 AI 平台</p>
+        <div class="platform-grid" id="platform-grid">
+            <!-- Platforms will be rendered by JS -->
+        </div>
+    </div>
+
+    <!-- Query Template -->
+    <div class="card">
+        <h2>查询场景</h2>
+        <p class="subtitle">选择或自定义向 AI 提问的方式，可多选</p>
+        <div class="query-templates" id="query-templates">
+            <!-- Templates rendered by JS -->
+        </div>
+        <div class="input-group" style="margin-top: 12px;">
+            <label>自定义查询（可选）</label>
+            <input type="text" id="custom-query" placeholder="例如：推荐一些好用的{category}工具">
+            <p class="hint">使用 {product} 代表产品名，{category} 代表产品类别</p>
+        </div>
+    </div>
+
+    <!-- Generate -->
+    <div class="card" style="text-align:center;">
+        <button class="btn-generate" id="btn-generate" onclick="generateReport()">
+            生成分析报告
+        </button>
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar-wrap">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="progress-status" id="progress-status">准备中...</div>
+        </div>
+    </div>
+
+    <!-- Report Section -->
+    <div id="report-section">
+        <div class="card">
+            <div class="report-header">
+                <div>
+                    <h2>分析报告</h2>
+                    <div class="report-meta" id="report-meta"></div>
+                </div>
+                <button class="btn-export" onclick="exportReport()">导出报告</button>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-grid" id="summary-grid"></div>
+
+            <!-- Visibility Bar Chart -->
+            <div class="chart-container">
+                <h3 style="margin-bottom: 16px; font-size: 1rem;">各产品 AI 可见度对比</h3>
+                <div class="bar-chart" id="bar-chart"></div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--primary);"></div> 你的产品</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: #94A3B8;"></div> 竞品</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Table -->
+        <div class="card">
+            <h2>详细结果</h2>
+            <p class="subtitle">各平台对每个产品的推荐情况</p>
+            <div class="table-wrapper">
+                <table class="result-table" id="result-table">
+                    <thead id="result-thead"></thead>
+                    <tbody id="result-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Platform Detail Cards -->
+        <div class="card">
+            <h2>各平台回复详情</h2>
+            <p class="subtitle">点击展开查看 AI 的完整回复</p>
+            <div class="platform-detail-cards" id="platform-details"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    GEO 分析工具 &mdash; 了解你的产品在 AI 时代的可见度
+</div>
+
+<script>
+// ==================== Data ====================
+
+const AI_PLATFORMS = [
+    { id: 'chatgpt',     name: 'ChatGPT',       icon: '🤖', desc: 'OpenAI GPT-4o',       apiKey: 'key-openai' },
+    { id: 'claude',      name: 'Claude',         icon: '🟣', desc: 'Anthropic Claude',     apiKey: 'key-anthropic' },
+    { id: 'gemini',      name: 'Gemini',         icon: '💎', desc: 'Google Gemini',         apiKey: 'key-google' },
+    { id: 'grok',        name: 'Grok',           icon: '⚡', desc: 'xAI Grok',              apiKey: 'key-xai' },
+    { id: 'perplexity',  name: 'Perplexity',     icon: '🔍', desc: 'Perplexity AI',         apiKey: 'key-perplexity' },
+    { id: 'deepseek',    name: 'DeepSeek',       icon: '🐋', desc: 'DeepSeek Chat',         apiKey: 'key-deepseek' },
+    { id: 'copilot',     name: 'Copilot',        icon: '🪟', desc: 'Microsoft Copilot',     apiKey: '' },
+    { id: 'doubao',      name: '豆包',           icon: '🫘', desc: '字节跳动豆包',            apiKey: '' },
+    { id: 'kimi',        name: 'Kimi',           icon: '🌙', desc: 'Moonshot Kimi',         apiKey: '' },
+    { id: 'tongyi',      name: '通义千问',        icon: '🔮', desc: '阿里通义千问',            apiKey: '' },
+];
+
+const QUERY_TEMPLATES = [
+    { id: 'recommend',    label: '推荐工具',     template: '请推荐一些{category}领域最好的工具或产品' },
+    { id: 'compare',      label: '对比分析',     template: '对比一下{product}和同类产品，哪个更好？' },
+    { id: 'top10',        label: 'Top 10 排名',  template: '列出{category}领域排名前10的产品' },
+    { id: 'beginner',     label: '新手推荐',     template: '我是新手，想找一个好用的{category}工具，有什么推荐？' },
+    { id: 'alternative',  label: '替代方案',     template: '{product}有哪些替代品？' },
+    { id: 'best2024',     label: '年度最佳',     template: '2025年最好用的{category}工具有哪些？' },
+];
+
+let competitors = [];
+let selectedPlatforms = new Set(['chatgpt', 'claude', 'gemini', 'grok', 'perplexity']);
+let selectedQueries = new Set(['recommend', 'top10']);
+let currentMode = 'demo';
+let reportData = null;
+
+// ==================== Init ====================
+
+function init() {
+    renderPlatforms();
+    renderQueryTemplates();
+}
+
+function renderPlatforms() {
+    const grid = document.getElementById('platform-grid');
+    grid.innerHTML = AI_PLATFORMS.map(p => `
+        <div class="platform-item ${selectedPlatforms.has(p.id) ? 'selected' : ''}" onclick="togglePlatform('${p.id}', this)">
+            <div class="platform-check">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <span class="platform-icon">${p.icon}</span>
+            <div class="platform-info">
+                <div class="name">${p.name}</div>
+                <div class="desc">${p.desc}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderQueryTemplates() {
+    const container = document.getElementById('query-templates');
+    container.innerHTML = QUERY_TEMPLATES.map(q => `
+        <button class="query-template-btn ${selectedQueries.has(q.id) ? 'active' : ''}"
+                data-id="${q.id}"
+                onclick="toggleQuery('${q.id}', this)"
+                title="${q.template}">
+            ${q.label}
+        </button>
+    `).join('');
+}
+
+// ==================== Interactions ====================
+
+function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    document.getElementById('api-key-area').style.display = mode === 'api' ? 'block' : 'none';
+}
+
+function togglePlatform(id, el) {
+    if (selectedPlatforms.has(id)) {
+        selectedPlatforms.delete(id);
+        el.classList.remove('selected');
+    } else {
+        selectedPlatforms.add(id);
+        el.classList.add('selected');
+    }
+}
+
+function toggleQuery(id, el) {
+    if (selectedQueries.has(id)) {
+        selectedQueries.delete(id);
+        el.classList.remove('active');
+    } else {
+        selectedQueries.add(id);
+        el.classList.add('active');
+    }
+}
+
+function addCompetitor() {
+    const input = document.getElementById('competitor-input');
+    const name = input.value.trim();
+    if (!name || competitors.includes(name)) {
+        input.value = '';
+        return;
+    }
+    competitors.push(name);
+    input.value = '';
+    renderCompetitorTags();
+}
+
+function removeCompetitor(name) {
+    competitors = competitors.filter(c => c !== name);
+    renderCompetitorTags();
+}
+
+function renderCompetitorTags() {
+    const container = document.getElementById('competitor-tags');
+    container.innerHTML = competitors.map(c => `
+        <span class="tag">
+            ${escapeHtml(c)}
+            <span class="remove-tag" onclick="removeCompetitor('${escapeHtml(c)}')">&times;</span>
+        </span>
+    `).join('');
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ==================== Report Generation ====================
+
+async function generateReport() {
+    const productName = document.getElementById('product-name').value.trim();
+    if (!productName) {
+        alert('请输入产品名称');
+        return;
+    }
+    if (competitors.length === 0) {
+        alert('请至少添加一个竞品');
+        return;
+    }
+    if (selectedPlatforms.size === 0) {
+        alert('请至少选择一个 AI 平台');
+        return;
+    }
+    if (selectedQueries.size === 0 && !document.getElementById('custom-query').value.trim()) {
+        alert('请至少选择一个查询场景');
+        return;
+    }
+
+    const btn = document.getElementById('btn-generate');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>分析中...';
+
+    const progressContainer = document.getElementById('progress-container');
+    progressContainer.style.display = 'block';
+
+    const productDesc = document.getElementById('product-desc').value.trim();
+    const platforms = AI_PLATFORMS.filter(p => selectedPlatforms.has(p.id));
+    const queries = buildQueries(productName, productDesc);
+
+    if (currentMode === 'demo') {
+        reportData = await generateDemoReport(productName, competitors, platforms, queries);
+    } else {
+        reportData = await generateApiReport(productName, competitors, platforms, queries);
+    }
+
+    renderReport(reportData);
+
+    btn.disabled = false;
+    btn.textContent = '重新生成报告';
+    progressContainer.style.display = 'none';
+    document.getElementById('report-section').style.display = 'block';
+    document.getElementById('report-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function buildQueries(productName, productDesc) {
+    const category = productDesc || productName;
+    const queries = [];
+
+    selectedQueries.forEach(id => {
+        const tmpl = QUERY_TEMPLATES.find(q => q.id === id);
+        if (tmpl) {
+            queries.push({
+                id: tmpl.id,
+                label: tmpl.label,
+                query: tmpl.template.replace(/\{product\}/g, productName).replace(/\{category\}/g, category)
+            });
+        }
+    });
+
+    const custom = document.getElementById('custom-query').value.trim();
+    if (custom) {
+        queries.push({
+            id: 'custom',
+            label: '自定义',
+            query: custom.replace(/\{product\}/g, productName).replace(/\{category\}/g, category)
+        });
+    }
+
+    return queries;
+}
+
+// ==================== Demo Mode ====================
+
+async function generateDemoReport(productName, competitors, platforms, queries) {
+    const allProducts = [productName, ...competitors];
+    const results = [];
+    const totalSteps = platforms.length * queries.length;
+    let currentStep = 0;
+
+    for (const platform of platforms) {
+        for (const query of queries) {
+            currentStep++;
+            updateProgress(currentStep / totalSteps * 100, `正在查询 ${platform.name} - ${query.label}...`);
+            await sleep(300 + Math.random() * 400);
+
+            const mentions = simulateMentions(productName, competitors, platform, query);
+            results.push({
+                platform: platform,
+                query: query,
+                mentions: mentions,
+                response: generateFakeResponse(query, mentions, platform)
+            });
+        }
+    }
+
+    return {
+        productName,
+        competitors,
+        platforms,
+        queries,
+        results,
+        timestamp: new Date().toLocaleString('zh-CN')
+    };
+}
+
+function simulateMentions(productName, competitors, platform, query) {
+    const allProducts = [productName, ...competitors];
+    const mentions = {};
+
+    // Simulate different visibility per platform - product has a baseline
+    const productBaseBias = {
+        'chatgpt': 0.65, 'claude': 0.60, 'gemini': 0.55, 'grok': 0.50,
+        'perplexity': 0.70, 'deepseek': 0.45, 'copilot': 0.55,
+        'doubao': 0.40, 'kimi': 0.45, 'tongyi': 0.42
+    };
+
+    allProducts.forEach((prod, idx) => {
+        const isOwn = idx === 0;
+        const baseProbability = isOwn
+            ? (productBaseBias[platform.id] || 0.5)
+            : 0.3 + Math.random() * 0.5;
+
+        // Query type affects mention
+        let queryBoost = 0;
+        if (query.id === 'compare' || query.id === 'alternative') queryBoost = 0.2;
+        if (query.id === 'recommend' || query.id === 'top10') queryBoost = 0.05;
+
+        const prob = Math.min(baseProbability + queryBoost, 0.95);
+        const mentioned = Math.random() < prob;
+
+        let status = 'not_found';
+        let rank = null;
+        if (mentioned) {
+            const r = Math.random();
+            if (r < 0.25) {
+                status = 'top_recommended';
+                rank = Math.floor(Math.random() * 3) + 1;
+            } else if (r < 0.6) {
+                status = 'recommended';
+                rank = Math.floor(Math.random() * 5) + 2;
+            } else {
+                status = 'mentioned';
+                rank = Math.floor(Math.random() * 5) + 5;
+            }
+        }
+
+        mentions[prod] = { mentioned, status, rank };
+    });
+
+    return mentions;
+}
+
+function generateFakeResponse(query, mentions, platform) {
+    const mentionedProducts = Object.entries(mentions)
+        .filter(([_, m]) => m.mentioned)
+        .sort((a, b) => (a[1].rank || 99) - (b[1].rank || 99));
+
+    let response = `关于"${query.query}"的回答：\n\n`;
+    if (mentionedProducts.length > 0) {
+        response += `以下是我推荐的一些工具：\n\n`;
+        mentionedProducts.forEach(([name, m], i) => {
+            response += `${i + 1}. **${name}**`;
+            if (m.status === 'top_recommended') {
+                response += ` - 强烈推荐！这是该领域最受欢迎的工具之一。`;
+            } else if (m.status === 'recommended') {
+                response += ` - 不错的选择，功能全面。`;
+            } else {
+                response += ` - 也值得一试。`;
+            }
+            response += '\n';
+        });
+    }
+
+    const notMentioned = Object.entries(mentions).filter(([_, m]) => !m.mentioned);
+    if (notMentioned.length > 0 && mentionedProducts.length > 0) {
+        response += `\n（注：以上为 ${platform.name} 模拟回复中提及的产品）`;
+    }
+
+    return response;
+}
+
+// ==================== API Mode ====================
+
+async function generateApiReport(productName, competitors, platforms, queries) {
+    const results = [];
+    const totalSteps = platforms.length * queries.length;
+    let currentStep = 0;
+
+    for (const platform of platforms) {
+        for (const query of queries) {
+            currentStep++;
+            updateProgress(currentStep / totalSteps * 100, `正在查询 ${platform.name} - ${query.label}...`);
+
+            let response = '';
+            try {
+                response = await callAI(platform, query.query, productName, competitors);
+            } catch (e) {
+                response = `[API 调用失败] ${e.message}`;
+            }
+
+            const mentions = analyzeMentions(response, productName, competitors);
+            results.push({
+                platform,
+                query,
+                mentions,
+                response
+            });
+        }
+    }
+
+    return {
+        productName,
+        competitors,
+        platforms,
+        queries,
+        results,
+        timestamp: new Date().toLocaleString('zh-CN')
+    };
+}
+
+async function callAI(platform, query, productName, competitors) {
+    const apiConfigs = {
+        chatgpt: {
+            url: 'https://api.openai.com/v1/chat/completions',
+            keyId: 'key-openai',
+            buildBody: (q) => JSON.stringify({
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content: q }],
+                max_tokens: 1024
+            }),
+            parseResponse: (data) => data.choices[0].message.content
+        },
+        claude: {
+            url: 'https://api.anthropic.com/v1/messages',
+            keyId: 'key-anthropic',
+            buildBody: (q) => JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1024,
+                messages: [{ role: 'user', content: q }]
+            }),
+            parseResponse: (data) => data.content[0].text,
+            extraHeaders: { 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }
+        },
+        gemini: {
+            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+            keyId: 'key-google',
+            isQueryParam: true,
+            buildBody: (q) => JSON.stringify({
+                contents: [{ parts: [{ text: q }] }]
+            }),
+            parseResponse: (data) => data.candidates[0].content.parts[0].text
+        },
+        grok: {
+            url: 'https://api.x.ai/v1/chat/completions',
+            keyId: 'key-xai',
+            buildBody: (q) => JSON.stringify({
+                model: 'grok-3',
+                messages: [{ role: 'user', content: q }],
+                max_tokens: 1024
+            }),
+            parseResponse: (data) => data.choices[0].message.content
+        },
+        deepseek: {
+            url: 'https://api.deepseek.com/chat/completions',
+            keyId: 'key-deepseek',
+            buildBody: (q) => JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [{ role: 'user', content: q }],
+                max_tokens: 1024
+            }),
+            parseResponse: (data) => data.choices[0].message.content
+        },
+        perplexity: {
+            url: 'https://api.perplexity.ai/chat/completions',
+            keyId: 'key-perplexity',
+            buildBody: (q) => JSON.stringify({
+                model: 'sonar',
+                messages: [{ role: 'user', content: q }],
+                max_tokens: 1024
+            }),
+            parseResponse: (data) => data.choices[0].message.content
+        }
+    };
+
+    const config = apiConfigs[platform.id];
+    if (!config) {
+        return `[${platform.name} 暂不支持 API 模式，请使用演示模式]`;
+    }
+
+    const apiKey = document.getElementById(config.keyId)?.value?.trim();
+    if (!apiKey) {
+        return `[未配置 ${platform.name} 的 API Key]`;
+    }
+
+    let url = config.url;
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(config.extraHeaders || {})
+    };
+
+    if (config.isQueryParam) {
+        url += `?key=${apiKey}`;
+    } else {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: config.buildBody(query)
+    });
+
+    if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`${resp.status} - ${errText.substring(0, 200)}`);
+    }
+
+    const data = await resp.json();
+    return config.parseResponse(data);
+}
+
+function analyzeMentions(response, productName, competitors) {
+    const allProducts = [productName, ...competitors];
+    const mentions = {};
+    const lowerResp = response.toLowerCase();
+
+    allProducts.forEach((prod, idx) => {
+        const lowerProd = prod.toLowerCase();
+        const mentioned = lowerResp.includes(lowerProd);
+
+        let status = 'not_found';
+        let rank = null;
+
+        if (mentioned) {
+            // Try to determine rank by position in response
+            const pos = lowerResp.indexOf(lowerProd);
+            const textBefore = lowerResp.substring(0, pos);
+
+            // Count numbered items before this mention
+            const numberedItems = textBefore.match(/\d+[\.\)、]/g);
+            rank = numberedItems ? numberedItems.length + 1 : null;
+
+            // Determine status based on position and context
+            const nearby = lowerResp.substring(Math.max(0, pos - 100), Math.min(lowerResp.length, pos + 100));
+            if (nearby.includes('强烈推荐') || nearby.includes('首选') || nearby.includes('最好') ||
+                nearby.includes('highly recommend') || nearby.includes('top pick') || nearby.includes('best')) {
+                status = 'top_recommended';
+                if (!rank) rank = 1;
+            } else if (nearby.includes('推荐') || nearby.includes('recommend') || nearby.includes('不错') || nearby.includes('great')) {
+                status = 'recommended';
+                if (!rank) rank = 3;
+            } else {
+                status = 'mentioned';
+                if (!rank) rank = 6;
+            }
+        }
+
+        mentions[prod] = { mentioned, status, rank };
+    });
+
+    return mentions;
+}
+
+// ==================== Render Report ====================
+
+function renderReport(data) {
+    renderReportMeta(data);
+    renderSummary(data);
+    renderBarChart(data);
+    renderResultTable(data);
+    renderPlatformDetails(data);
+}
+
+function renderReportMeta(data) {
+    document.getElementById('report-meta').textContent =
+        `${data.timestamp} · ${data.platforms.length} 个平台 · ${data.queries.length} 种查询 · ${currentMode === 'demo' ? '演示模式' : 'API 模式'}`;
+}
+
+function renderSummary(data) {
+    const { productName } = data;
+
+    // Calculate product visibility score
+    let totalChecks = 0;
+    let productMentions = 0;
+    let productTopRec = 0;
+    let avgRank = 0;
+    let rankCount = 0;
+
+    data.results.forEach(r => {
+        totalChecks++;
+        const m = r.mentions[productName];
+        if (m && m.mentioned) {
+            productMentions++;
+            if (m.status === 'top_recommended') productTopRec++;
+            if (m.rank) { avgRank += m.rank; rankCount++; }
+        }
+    });
+
+    const visibilityRate = totalChecks > 0 ? Math.round(productMentions / totalChecks * 100) : 0;
+    avgRank = rankCount > 0 ? (avgRank / rankCount).toFixed(1) : '-';
+
+    // Best platform for the product
+    const platformScores = {};
+    data.results.forEach(r => {
+        const pid = r.platform.id;
+        if (!platformScores[pid]) platformScores[pid] = { mentions: 0, total: 0, name: r.platform.name };
+        platformScores[pid].total++;
+        if (r.mentions[productName]?.mentioned) platformScores[pid].mentions++;
+    });
+
+    let bestPlatform = '-';
+    let bestRate = 0;
+    Object.values(platformScores).forEach(ps => {
+        const rate = ps.mentions / ps.total;
+        if (rate > bestRate) { bestRate = rate; bestPlatform = ps.name; }
+    });
+
+    const grid = document.getElementById('summary-grid');
+    grid.innerHTML = `
+        <div class="summary-item">
+            <div class="number color-info">${visibilityRate}%</div>
+            <div class="label">AI 可见度</div>
+        </div>
+        <div class="summary-item">
+            <div class="number color-success">${productMentions}/${totalChecks}</div>
+            <div class="label">被提及次数</div>
+        </div>
+        <div class="summary-item">
+            <div class="number color-warning">${avgRank}</div>
+            <div class="label">平均排名</div>
+        </div>
+        <div class="summary-item">
+            <div class="number color-danger">${productTopRec}</div>
+            <div class="label">首推次数</div>
+        </div>
+    `;
+}
+
+function renderBarChart(data) {
+    const { productName, competitors } = data;
+    const allProducts = [productName, ...competitors];
+
+    // Calculate visibility per product
+    const productVisibility = {};
+    allProducts.forEach(prod => {
+        let mentions = 0, total = 0;
+        data.results.forEach(r => {
+            total++;
+            if (r.mentions[prod]?.mentioned) mentions++;
+        });
+        productVisibility[prod] = total > 0 ? Math.round(mentions / total * 100) : 0;
+    });
+
+    const maxVal = Math.max(...Object.values(productVisibility), 1);
+
+    const chart = document.getElementById('bar-chart');
+    chart.innerHTML = allProducts.map((prod, idx) => {
+        const val = productVisibility[prod];
+        const isOwn = idx === 0;
+        return `
+            <div class="bar-row">
+                <div class="bar-label" style="${isOwn ? 'color:var(--primary);font-weight:700;' : ''}">${escapeHtml(prod)}</div>
+                <div class="bar-track">
+                    <div class="bar-fill ${isOwn ? 'bar-self' : 'bar-competitor'}" style="width: ${val}%;">
+                        ${val}%
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderResultTable(data) {
+    const { productName, competitors, platforms } = data;
+    const allProducts = [productName, ...competitors];
+
+    // Group results by platform
+    const platformGroups = {};
+    data.results.forEach(r => {
+        if (!platformGroups[r.platform.id]) {
+            platformGroups[r.platform.id] = { platform: r.platform, results: [] };
+        }
+        platformGroups[r.platform.id].results.push(r);
+    });
+
+    // Build table header
+    const thead = document.getElementById('result-thead');
+    thead.innerHTML = `
+        <tr>
+            <th>AI 平台</th>
+            <th>查询场景</th>
+            ${allProducts.map((p, i) => `<th>${escapeHtml(p)}${i === 0 ? ' ⭐' : ''}</th>`).join('')}
+        </tr>
+    `;
+
+    // Build table body
+    const tbody = document.getElementById('result-tbody');
+    let rows = '';
+
+    data.results.forEach((r, idx) => {
+        rows += '<tr>';
+        rows += `<td>${r.platform.icon} ${r.platform.name}</td>`;
+        rows += `<td>${r.query.label}</td>`;
+
+        allProducts.forEach((prod, pIdx) => {
+            const m = r.mentions[prod];
+            if (!m || !m.mentioned) {
+                rows += `<td><span class="badge badge-not-found">未提及</span></td>`;
+            } else if (m.status === 'top_recommended') {
+                rows += `<td><span class="badge badge-top">🏆 首推 #${m.rank || '-'}</span></td>`;
+            } else if (m.status === 'recommended') {
+                rows += `<td><span class="badge badge-recommended">👍 推荐 #${m.rank || '-'}</span></td>`;
+            } else {
+                rows += `<td><span class="badge badge-mentioned">提及 #${m.rank || '-'}</span></td>`;
+            }
+        });
+
+        rows += '</tr>';
+    });
+
+    tbody.innerHTML = rows;
+}
+
+function renderPlatformDetails(data) {
+    const container = document.getElementById('platform-details');
+    const { productName, competitors } = data;
+    const allProducts = [productName, ...competitors];
+
+    // Group by platform
+    const groups = {};
+    data.results.forEach(r => {
+        if (!groups[r.platform.id]) groups[r.platform.id] = { platform: r.platform, items: [] };
+        groups[r.platform.id].items.push(r);
+    });
+
+    container.innerHTML = Object.values(groups).map((g, gi) => {
+        const detailsHtml = g.items.map((item, qi) => `
+            <div style="margin-bottom: 16px;">
+                <div class="query-used"><strong>查询：</strong>${escapeHtml(item.query.query)}</div>
+                <div class="product-mention-list">
+                    ${allProducts.map(prod => {
+                        const m = item.mentions[prod];
+                        let badgeHtml;
+                        if (!m || !m.mentioned) {
+                            badgeHtml = '<span class="badge badge-not-found">未提及</span>';
+                        } else if (m.status === 'top_recommended') {
+                            badgeHtml = '<span class="badge badge-top">🏆 首推 #' + (m.rank || '-') + '</span>';
+                        } else if (m.status === 'recommended') {
+                            badgeHtml = '<span class="badge badge-recommended">👍 推荐 #' + (m.rank || '-') + '</span>';
+                        } else {
+                            badgeHtml = '<span class="badge badge-mentioned">提及 #' + (m.rank || '-') + '</span>';
+                        }
+                        return `<div class="product-mention-item">
+                            <span class="product-name">${escapeHtml(prod)}</span>
+                            ${badgeHtml}
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div class="ai-response-preview">${escapeHtml(item.response)}</div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="platform-detail-card">
+                <div class="platform-detail-header" onclick="toggleDetail(this)">
+                    <span class="platform-icon">${g.platform.icon}</span>
+                    <span>${g.platform.name}</span>
+                    <span class="arrow">▶</span>
+                </div>
+                <div class="platform-detail-body">
+                    ${detailsHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleDetail(el) {
+    el.classList.toggle('open');
+    el.nextElementSibling.classList.toggle('show');
+}
+
+// ==================== Export ====================
+
+function exportReport() {
+    if (!reportData) return;
+    const { productName, competitors, platforms, results, timestamp } = reportData;
+    const allProducts = [productName, ...competitors];
+
+    let csv = '\uFEFF'; // BOM for Excel UTF-8
+    csv += 'GEO 分析报告\n';
+    csv += `生成时间,${timestamp}\n`;
+    csv += `产品,${productName}\n`;
+    csv += `竞品,${competitors.join('、')}\n\n`;
+
+    // Table header
+    csv += 'AI 平台,查询场景,' + allProducts.join(',') + '\n';
+
+    results.forEach(r => {
+        csv += `${r.platform.name},${r.query.label}`;
+        allProducts.forEach(prod => {
+            const m = r.mentions[prod];
+            if (!m || !m.mentioned) {
+                csv += ',未提及';
+            } else if (m.status === 'top_recommended') {
+                csv += `,首推 #${m.rank || '-'}`;
+            } else if (m.status === 'recommended') {
+                csv += `,推荐 #${m.rank || '-'}`;
+            } else {
+                csv += `,提及 #${m.rank || '-'}`;
+            }
+        });
+        csv += '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GEO_Report_${productName}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ==================== Utilities ====================
+
+function updateProgress(percent, status) {
+    document.getElementById('progress-bar').style.width = percent + '%';
+    document.getElementById('progress-status').textContent = status;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ==================== Start ====================
+init();
+</script>
+
+</body>
+</html>
