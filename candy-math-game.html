@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>糖果小镇减法大冒险</title>
+<style>
+  /* ===== 全局样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', Arial, sans-serif;
+    background: linear-gradient(135deg, #FFE4B5 0%, #FFC0CB 50%, #B0E0E6 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  /* ===== 头部 ===== */
+  .header {
+    text-align: center;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+
+  .game-title {
+    font-size: clamp(20px, 5vw, 32px);
+    color: #FF6B6B;
+    text-shadow: 3px 3px 0 #FFD700, -1px -1px 0 #FF8C00;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: clamp(12px, 3vw, 16px);
+    color: #9B59B6;
+    margin-top: 4px;
+    font-weight: bold;
+  }
+
+  /* ===== 进度条 ===== */
+  .progress-bar {
+    background: rgba(255,255,255,0.5);
+    border-radius: 20px;
+    height: 18px;
+    width: 90%;
+    max-width: 400px;
+    margin: 8px auto;
+    overflow: hidden;
+    border: 2px solid #FFD700;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700, #FF6B6B);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-text {
+    font-size: 13px;
+    color: #6C3483;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ===== 主游戏区 ===== */
+  .game-container {
+    background: rgba(255,255,255,0.9);
+    border-radius: 28px;
+    padding: 18px 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 8px 32px rgba(255,107,107,0.25);
+    border: 4px solid #FFD700;
+    position: relative;
+  }
+
+  /* ===== 题目显示 ===== */
+  .question-display {
+    text-align: center;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    border-radius: 20px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.4);
+  }
+
+  .question-text {
+    font-size: clamp(36px, 10vw, 56px);
+    color: white;
+    font-weight: 900;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    letter-spacing: 6px;
+  }
+
+  /* ===== 糖果罐区域 ===== */
+  .candy-jar-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .candy-jar {
+    background: linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%);
+    border: 4px solid #66BB6A;
+    border-radius: 16px;
+    padding: 12px;
+    min-width: 280px;
+    max-width: 340px;
+    position: relative;
+  }
+
+  .candy-jar-label {
+    text-align: center;
+    font-size: 14px;
+    color: #2E7D32;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  /* 糖果分组 */
+  .candy-groups {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .candy-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .group-label {
+    font-size: 12px;
+    color: #555;
+    font-weight: bold;
+    margin-bottom: 4px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 2px 8px;
+    border: 1.5px solid #aaa;
+  }
+
+  .candy-bundle {
+    background: linear-gradient(135deg, #FFF9C4, #FFF176);
+    border: 3px dashed #F9A825;
+    border-radius: 12px;
+    padding: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: 80px;
+    justify-content: center;
+    min-height: 80px;
+  }
+
+  .candy-singles {
+    background: rgba(255,255,255,0.6);
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: 80px;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .candy-item {
+    font-size: 22px;
+    line-height: 1;
+    transition: all 0.4s ease;
+    display: inline-block;
+  }
+
+  .candy-item.removing {
+    animation: candyFly 0.5s ease forwards;
+  }
+
+  @keyframes candyFly {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4) translateY(-10px); opacity: 0.6; }
+    100% { transform: scale(0) translateY(-30px); opacity: 0; }
+  }
+
+  /* 糖果罐顶部装饰 */
+  .jar-top {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  /* ===== 步骤提示 ===== */
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .step-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    border: 3px solid #ddd;
+    background: #f5f5f5;
+    color: #999;
+    transition: all 0.3s;
+  }
+
+  .step-dot.active {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    border-color: #FF6B6B;
+    color: white;
+    box-shadow: 0 2px 8px rgba(255,107,107,0.5);
+    transform: scale(1.1);
+  }
+
+  .step-dot.done {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+  }
+
+  /* ===== 问题与选项区 ===== */
+  .question-area {
+    margin-bottom: 14px;
+  }
+
+  .question-prompt {
+    text-align: center;
+    font-size: clamp(15px, 4vw, 19px);
+    color: #6C3483;
+    font-weight: bold;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    background: #F3E5F5;
+    border-radius: 12px;
+    padding: 10px;
+    border: 2px solid #CE93D8;
+  }
+
+  .options-grid {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .option-btn {
+    background: linear-gradient(135deg, #42A5F5, #1E88E5);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 20px;
+    font-size: clamp(16px, 4vw, 20px);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(30,136,229,0.4);
+    min-width: 80px;
+    font-family: inherit;
+  }
+
+  .option-btn:hover, .option-btn:active {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 6px 15px rgba(30,136,229,0.5);
+  }
+
+  .option-btn.correct {
+    background: linear-gradient(135deg, #66BB6A, #43A047);
+    box-shadow: 0 4px 10px rgba(76,175,80,0.5);
+  }
+
+  .option-btn.wrong {
+    background: linear-gradient(135deg, #EF5350, #E53935);
+    box-shadow: 0 4px 10px rgba(229,57,53,0.5);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  /* ===== 反馈信息 ===== */
+  .feedback {
+    text-align: center;
+    font-size: clamp(16px, 4vw, 20px);
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 14px;
+    margin-top: 10px;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+
+  .feedback.correct-msg {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 2px solid #66BB6A;
+    animation: popIn 0.3s ease;
+  }
+
+  .feedback.wrong-msg {
+    background: #FFF3E0;
+    color: #E65100;
+    border: 2px solid #FFB74D;
+    animation: popIn 0.3s ease;
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ===== 下一步按钮 ===== */
+  .next-btn {
+    display: none;
+    width: 100%;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 14px;
+    font-size: clamp(16px, 4vw, 20px);
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.4);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .next-btn.show { display: block; }
+  .next-btn:hover, .next-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255,107,107,0.5);
+  }
+
+  /* ===== 平十法讲解框 ===== */
+  .method-hint {
+    background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+    border: 3px solid #FFD700;
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: clamp(13px, 3.5vw, 15px);
+    color: #5D4037;
+    line-height: 1.8;
+    display: none;
+  }
+
+  .method-hint.show { display: block; animation: popIn 0.4s ease; }
+  .method-hint .hint-title {
+    font-size: clamp(15px, 4vw, 17px);
+    color: #E65100;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  /* ===== 结算画面 ===== */
+  .result-screen {
+    display: none;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .result-screen.show { display: block; animation: popIn 0.5s ease; }
+
+  .result-title {
+    font-size: clamp(26px, 7vw, 40px);
+    color: #FF6B6B;
+    font-weight: 900;
+    text-shadow: 3px 3px 0 #FFD700;
+    margin-bottom: 12px;
+  }
+
+  .score-display {
+    font-size: clamp(40px, 12vw, 70px);
+    color: #FF6B6B;
+    font-weight: 900;
+    margin: 10px 0;
+  }
+
+  .score-label {
+    font-size: clamp(16px, 4vw, 22px);
+    color: #6C3483;
+    font-weight: bold;
+  }
+
+  .star-display {
+    font-size: 40px;
+    margin: 10px 0;
+    letter-spacing: 4px;
+  }
+
+  .restart-btn {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 40px;
+    font-size: clamp(18px, 5vw, 24px);
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 16px;
+    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .restart-btn:hover, .restart-btn:active {
+    transform: scale(1.05) translateY(-3px);
+    box-shadow: 0 8px 24px rgba(255,107,107,0.5);
+  }
+
+  /* ===== 星星动画 ===== */
+  .stars-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+  }
+
+  .falling-star {
+    position: absolute;
+    font-size: 28px;
+    animation: starFall 1.5s ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes starFall {
+    0% { transform: translateY(-20px) rotate(0deg) scale(0.5); opacity: 1; }
+    60% { opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg) scale(1.2); opacity: 0; }
+  }
+
+  /* ===== 步骤动画演示区 ===== */
+  .animation-area {
+    text-align: center;
+    padding: 10px;
+    font-size: clamp(14px, 3.5vw, 16px);
+    color: #444;
+    min-height: 40px;
+    font-weight: bold;
+  }
+
+  .formula-display {
+    background: #E8EAF6;
+    border-radius: 12px;
+    padding: 8px 14px;
+    display: inline-block;
+    font-size: clamp(16px, 4.5vw, 22px);
+    color: #3F51B5;
+    font-weight: 900;
+    margin: 6px 4px;
+    border: 2px solid #9FA8DA;
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 380px) {
+    body { padding: 8px 6px; }
+    .candy-jar { min-width: 240px; }
+    .candy-bundle, .candy-singles { width: 70px; }
+    .candy-item { font-size: 19px; }
+  }
+
+  /* ===== 开始画面 ===== */
+  .start-screen {
+    text-align: center;
+    padding: 20px 16px;
+  }
+
+  .start-emoji { font-size: 70px; display: block; margin-bottom: 12px; }
+
+  .start-desc {
+    font-size: clamp(14px, 3.8vw, 17px);
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    background: #FFF9C4;
+    border-radius: 14px;
+    padding: 14px;
+    border: 2px solid #FFD700;
+  }
+
+  .start-btn {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 48px;
+    font-size: clamp(20px, 5vw, 26px);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .start-btn:hover, .start-btn:active {
+    transform: scale(1.06) translateY(-3px);
+  }
+
+  /* 计数气泡 */
+  .count-badge {
+    display: inline-block;
+    background: #FF6B6B;
+    color: white;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<!-- 星星撒落容器 -->
+<div class="stars-overlay" id="starsOverlay"></div>
+
+<!-- 头部 -->
+<div class="header">
+  <div class="game-title">🍬 糖果小镇减法大冒险 🍭</div>
+  <div class="subtitle">用平十法，减法变简单！</div>
+</div>
+
+<!-- 进度条（开始后显示） -->
+<div id="progressArea" style="width:100%;max-width:480px;display:none;">
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="progress-text" id="progressText">第 1 题 / 共 5 题</div>
+</div>
+
+<!-- 主游戏容器 -->
+<div class="game-container" id="gameContainer">
+
+  <!-- ===== 开始画面 ===== -->
+  <div class="start-screen" id="startScreen">
+    <span class="start-emoji">🍬🌟🍭</span>
+    <div class="start-desc">
+      <strong>什么是"平十法"？</strong><br>
+      做减法时，先把减数拆开，<br>
+      先减到<strong>整十数</strong>，再减剩余部分，<br>
+      这样计算更轻松！<br><br>
+      例如：<strong>13 - 5</strong><br>
+      把5拆成 <strong>3 和 2</strong><br>
+      13 - 3 = <strong>10</strong>，再 10 - 2 = <strong>8</strong> ✓
+    </div>
+    <button class="start-btn" onclick="startGame()">开始游戏 🚀</button>
+  </div>
+
+  <!-- ===== 游戏画面 ===== -->
+  <div id="gameScreen" style="display:none;">
+
+    <!-- 题目 -->
+    <div class="question-display">
+      <div class="question-text" id="questionText">13 - 5 = ?</div>
+    </div>
+
+    <!-- 糖果罐 -->
+    <div class="candy-jar-section">
+      <div class="candy-jar">
+        <div class="jar-top">🫙</div>
+        <div class="candy-jar-label" id="jarLabel">糖果罐（共 13 颗）</div>
+        <div class="candy-groups">
+          <!-- 整十捆 -->
+          <div class="candy-group">
+            <div class="group-label">一捆 10 个</div>
+            <div class="candy-bundle" id="bundleArea"></div>
+          </div>
+          <!-- 散装个位 -->
+          <div class="candy-group">
+            <div class="group-label">散装 <span id="singlesCountLabel">3</span> 个</div>
+            <div class="candy-singles" id="singlesArea"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤指示器 -->
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot1">1</div>
+      <div style="line-height:30px;color:#ccc;font-size:18px;">→</div>
+      <div class="step-dot" id="dot2">2</div>
+      <div style="line-height:30px;color:#ccc;font-size:18px;">→</div>
+      <div class="step-dot" id="dot3">3</div>
+    </div>
+
+    <!-- 平十法提示框 -->
+    <div class="method-hint" id="methodHint">
+      <div class="hint-title">💡 平十法步骤</div>
+      <span id="hintContent"></span>
+    </div>
+
+    <!-- 问题区域 -->
+    <div class="question-area">
+      <div class="question-prompt" id="questionPrompt">先把减数拆成几和几？</div>
+      <div class="animation-area" id="animationArea"></div>
+      <div class="options-grid" id="optionsGrid"></div>
+    </div>
+
+    <!-- 反馈 -->
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 下一步按钮 -->
+    <button class="next-btn" id="nextBtn" onclick="nextStep()">继续 →</button>
+  </div>
+
+  <!-- ===== 结算画面 ===== -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-title" id="resultTitle">🎉 太棒了！</div>
+    <div class="score-label">你的得分</div>
+    <div class="score-display" id="scoreDisplay">5/5</div>
+    <div class="star-display" id="starDisplay">⭐⭐⭐⭐⭐</div>
+    <div style="font-size:clamp(14px,4vw,18px);color:#666;margin-top:8px;" id="resultMsg"></div>
+    <button class="restart-btn" onclick="restartGame()">再玩一次 🔄</button>
+  </div>
+
+</div><!-- /game-container -->
+
+<script>
+// ============================================================
+//  糖果小镇减法大冒险 — 核心逻辑
+// ============================================================
+
+// ===== 状态变量 =====
+let currentQ = null;       // 当前题目对象
+let currentStep = 1;       // 当前步骤 (1/2/3)
+let score = 0;             // 得分
+let questionIndex = 0;     // 当前第几题（0-based）
+const TOTAL_Q = 5;         // 共几题
+let questions = [];        // 题库（当局）
+let stepAnswered = false;  // 当前步骤是否已回答
+
+// ===== 生成题库 =====
+function generateQuestions() {
+  const pool = [];
+  // 被减数 11-19，减数 2-9，结果 >= 1
+  for (let a = 11; a <= 19; a++) {
+    for (let b = 2; b <= 9; b++) {
+      if (a - b >= 1) {
+        pool.push({ a, b, ans: a - b });
+      }
+    }
+  }
+  // 随机洗牌，取前 TOTAL_Q 题
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, TOTAL_Q);
+}
+
+// ===== 计算平十法拆法 =====
+// 对于 a - b，个位是 a % 10
+// 把 b 拆成 (a%10) + (b - a%10)
+// 先减 (a%10) 得到 10，再减 (b - a%10)
+function getSplitInfo(a, b) {
+  const ones = a % 10;          // 个位，先减这个
+  const rest = b - ones;        // 剩余要从10里减
+  return { ones, rest };
+}
+
+// ===== 生成错误选项 =====
+function genWrongSplits(ones, rest, b) {
+  // 正确是 ones + rest = b
+  const allOptions = new Set();
+  allOptions.add(`${ones} 和 ${rest}`);
+
+  // 生成干扰项
+  const distractors = [];
+  for (let x = 1; x <= b - 1; x++) {
+    const y = b - x;
+    if (x !== ones || y !== rest) {
+      distractors.push(`${x} 和 ${y}`);
+    }
+  }
+  // 随机取2个干扰项
+  shuffle(distractors);
+  const result = [`${ones} 和 ${rest}`];
+  for (let d of distractors) {
+    if (result.length < 3) result.push(d);
+  }
+  // 如果不够，补充
+  while (result.length < 3) result.push(`${b-1} 和 1`);
+  shuffle(result);
+  return result;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== 开始游戏 =====
+function startGame() {
+  questions = generateQuestions();
+  score = 0;
+  questionIndex = 0;
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  document.getElementById('resultScreen').classList.remove('show');
+  document.getElementById('progressArea').style.display = 'block';
+
+  loadQuestion();
+}
+
+// ===== 加载题目 =====
+function loadQuestion() {
+  currentQ = questions[questionIndex];
+  currentStep = 1;
+  stepAnswered = false;
+
+  // 更新进度
+  updateProgress();
+
+  // 显示题目
+  document.getElementById('questionText').textContent =
+    `${currentQ.a} - ${currentQ.b} = ?`;
+
+  // 渲染糖果罐
+  renderCandyJar(currentQ.a);
+
+  // 更新步骤指示
+  updateStepDots(1);
+
+  // 隐藏提示、反馈、下一步
+  document.getElementById('methodHint').classList.remove('show');
+  hideFeedback();
+  document.getElementById('nextBtn').classList.remove('show');
+  document.getElementById('animationArea').innerHTML = '';
+
+  // 加载第一步
+  loadStep1();
+}
+
+// ===== 渲染糖果罐 =====
+function renderCandyJar(count) {
+  const bundleArea = document.getElementById('bundleArea');
+  const singlesArea = document.getElementById('singlesArea');
+  const ones = count % 10;
+
+  document.getElementById('jarLabel').textContent = `糖果罐（共 ${count} 颗）`;
+  document.getElementById('singlesCountLabel').textContent = ones;
+
+  // 清空
+  bundleArea.innerHTML = '';
+  singlesArea.innerHTML = '';
+
+  // 一捆10个（始终显示10个）
+  for (let i = 0; i < 10; i++) {
+    const span = document.createElement('span');
+    span.className = 'candy-item';
+    span.textContent = '🍬';
+    span.id = `bundle-${i}`;
+    bundleArea.appendChild(span);
+  }
+
+  // 散装个位
+  for (let i = 0; i < ones; i++) {
+    const span = document.createElement('span');
+    span.className = 'candy-item';
+    span.textContent = '🍭';
+    span.id = `single-${i}`;
+    singlesArea.appendChild(span);
+  }
+}
+
+// ===== 步骤1：拆减数 =====
+function loadStep1() {
+  const { a, b } = currentQ;
+  const { ones, rest } = getSplitInfo(a, b);
+  const options = genWrongSplits(ones, rest, b);
+  const correctStr = `${ones} 和 ${rest}`;
+
+  document.getElementById('questionPrompt').innerHTML =
+    `第①步：把 <strong>${b}</strong> 拆成"几"和"几"？<br>
+     <small style="color:#888;">（先减到10，再减剩余）</small>`;
+
+  renderOptions(options, correctStr, () => {
+    // 答对回调
+    const hint = document.getElementById('methodHint');
+    document.getElementById('hintContent').innerHTML =
+      `<span class="formula-display">${a} - ${ones} = 10</span>
+       再 <span class="formula-display">10 - ${rest} = ${a - b}</span>`;
+    hint.classList.add('show');
+    document.getElementById('nextBtn').classList.add('show');
+    document.getElementById('nextBtn').onclick = () => {
+      stepAnswered = false;
+      loadStep2();
+    };
+  });
+}
+
+// ===== 步骤2：取走个位糖果，问剩几颗 =====
+function loadStep2() {
+  updateStepDots(2);
+  const { a, b } = currentQ;
+  const { ones } = getSplitInfo(a, b);
+
+  document.getElementById('questionPrompt').innerHTML =
+    `第②步：从罐子里取走 <strong>${ones}</strong> 颗散装糖果，<br>现在罐子里还剩几颗？`;
+  document.getElementById('animationArea').innerHTML = '';
+  document.getElementById('nextBtn').classList.remove('show');
+  hideFeedback();
+
+  // 动画：取走散装个位糖果
+  setTimeout(() => {
+    removeSingleCandies(ones, () => {
+      // 动画完成后更新标签
+      document.getElementById('singlesCountLabel').textContent = 0;
+      document.getElementById('jarLabel').textContent = `糖果罐（剩 10 颗）`;
+      document.getElementById('animationArea').innerHTML =
+        `<span class="formula-display">${a} - ${ones} = 10</span>`;
+
+      // 给出选项（答案固定是10）
+      const opts = shuffle([10, 9, 11]);
+      renderOptions(opts.map(String), '10', () => {
+        document.getElementById('nextBtn').classList.add('show');
+        document.getElementById('nextBtn').onclick = () => {
+          stepAnswered = false;
+          loadStep3();
+        };
+      });
+    });
+  }, 300);
+}
+
+// ===== 步骤3：从10里再减，求最终答案 =====
+function loadStep3() {
+  updateStepDots(3);
+  const { a, b } = currentQ;
+  const { ones, rest } = getSplitInfo(a, b);
+  const finalAns = a - b;
+
+  document.getElementById('questionPrompt').innerHTML =
+    `第③步：再从10颗里取走 <strong>${rest}</strong> 颗，<br>最终答案是多少？`;
+  document.getElementById('animationArea').innerHTML = '';
+  document.getElementById('nextBtn').classList.remove('show');
+  hideFeedback();
+
+  // 动画：从捆里取走 rest 颗
+  setTimeout(() => {
+    removeBundleCandies(rest, () => {
+      document.getElementById('jarLabel').textContent = `糖果罐（剩 ${finalAns} 颗）`;
+      document.getElementById('animationArea').innerHTML =
+        `<span class="formula-display">10 - ${rest} = ${finalAns}</span>`;
+
+      // 生成选项
+      const wrongs = [];
+      for (let d = -3; d <= 3; d++) {
+        if (d !== 0 && finalAns + d >= 0 && finalAns + d <= 19) {
+          wrongs.push(finalAns + d);
+        }
+      }
+      shuffle(wrongs);
+      const opts = shuffle([finalAns, wrongs[0], wrongs[1]]);
+      renderOptions(opts.map(String), String(finalAns), () => {
+        // 全部答对，加分
+        score++;
+        launchStars();
+        document.getElementById('nextBtn').classList.add('show');
+        document.getElementById('nextBtn').textContent =
+          questionIndex + 1 < TOTAL_Q ? '下一题 →' : '查看结果 🎉';
+        document.getElementById('nextBtn').onclick = () => {
+          questionIndex++;
+          if (questionIndex < TOTAL_Q) {
+            loadQuestion();
+          } else {
+            showResult();
+          }
+        };
+      });
+    });
+  }, 300);
+}
+
+// ===== 渲染选项按钮 =====
+function renderOptions(options, correctValue, onCorrect) {
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      if (stepAnswered) return;
+
+      // 禁用所有按钮
+      grid.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+      if (opt === correctValue) {
+        stepAnswered = true;
+        btn.classList.add('correct');
+        showFeedback(true);
+        if (onCorrect) onCorrect();
+      } else {
+        btn.classList.add('wrong');
+        showFeedback(false);
+        // 2秒后重新启用
+        setTimeout(() => {
+          btn.classList.remove('wrong');
+          grid.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+        }, 1000);
+      }
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ===== 显示/隐藏反馈 =====
+function showFeedback(correct) {
+  const el = document.getElementById('feedback');
+  el.classList.remove('show', 'correct-msg', 'wrong-msg');
+  if (correct) {
+    el.textContent = '✅ 答对了！太棒了！🌟';
+    el.classList.add('show', 'correct-msg');
+  } else {
+    el.textContent = '❌ 再想想，你可以的！💪';
+    el.classList.add('show', 'wrong-msg');
+  }
+}
+
+function hideFeedback() {
+  const el = document.getElementById('feedback');
+  el.classList.remove('show', 'correct-msg', 'wrong-msg');
+}
+
+// ===== 更新步骤指示器 =====
+function updateStepDots(step) {
+  currentStep = step;
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById(`dot${i}`);
+    dot.classList.remove('active', 'done');
+    if (i < step) dot.classList.add('done');
+    else if (i === step) dot.classList.add('active');
+  }
+}
+
+// ===== 更新进度条 =====
+function updateProgress() {
+  const pct = (questionIndex / TOTAL_Q) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent =
+    `第 ${questionIndex + 1} 题 / 共 ${TOTAL_Q} 题`;
+}
+
+// ===== 动画：移除散装糖果 =====
+function removeSingleCandies(count, callback) {
+  const singlesArea = document.getElementById('singlesArea');
+  const items = singlesArea.querySelectorAll('.candy-item');
+  let removed = 0;
+  let idx = items.length - 1;
+
+  function removeNext() {
+    if (removed >= count || idx < 0) {
+      setTimeout(callback, 200);
+      return;
+    }
+    const item = items[idx];
+    item.classList.add('removing');
+    setTimeout(() => {
+      item.remove();
+      removed++;
+      idx--;
+      setTimeout(removeNext, 150);
+    }, 450);
+  }
+  removeNext();
+}
+
+// ===== 动画：移除捆中糖果 =====
+function removeBundleCandies(count, callback) {
+  const bundleArea = document.getElementById('bundleArea');
+  const items = bundleArea.querySelectorAll('.candy-item');
+  let removed = 0;
+  let idx = items.length - 1;
+
+  function removeNext() {
+    if (removed >= count || idx < 0) {
+      setTimeout(callback, 200);
+      return;
+    }
+    const item = items[idx];
+    item.classList.add('removing');
+    setTimeout(() => {
+      item.remove();
+      removed++;
+      idx--;
+      setTimeout(removeNext, 150);
+    }, 450);
+  }
+  removeNext();
+}
+
+// ===== 撒星星动画 =====
+function launchStars() {
+  const overlay = document.getElementById('starsOverlay');
+  const emojis = ['🌟', '⭐', '✨', '🎉', '🍬', '🍭', '💫'];
+  for (let i = 0; i < 18; i++) {
+    setTimeout(() => {
+      const star = document.createElement('span');
+      star.className = 'falling-star';
+      star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = '-30px';
+      star.style.animationDuration = (1.0 + Math.random() * 1.2) + 's';
+      star.style.fontSize = (20 + Math.random() * 20) + 'px';
+      overlay.appendChild(star);
+      setTimeout(() => star.remove(), 2500);
+    }, i * 80);
+  }
+}
+
+// ===== 显示结算 =====
+function showResult() {
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('progressArea').style.display = 'none';
+
+  const result = document.getElementById('resultScreen');
+  const stars = Math.round((score / TOTAL_Q) * 5);
+  const starStr = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+
+  let title = '🎉 太厉害了！';
+  let msg = '你完全掌握了平十法，继续加油！';
+  if (score < 3) {
+    title = '🌱 继续努力！';
+    msg = '多练几次，你一定能全部答对！';
+  } else if (score < 5) {
+    title = '👍 做得很好！';
+    msg = '再练一练就能全部答对了！';
+  }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('scoreDisplay').textContent = `${score} / ${TOTAL_Q}`;
+  document.getElementById('starDisplay').textContent = starStr;
+  document.getElementById('resultMsg').textContent = msg;
+
+  result.classList.add('show');
+
+  if (score >= 4) launchStars();
+}
+
+// ===== 重新开始 =====
+function restartGame() {
+  document.getElementById('resultScreen').classList.remove('show');
+  document.getElementById('startScreen').style.display = 'block';
+  document.getElementById('gameScreen').style.display = 'none';
+}
+
+// ===== nextStep 占位（实际由 onclick 覆盖） =====
+function nextStep() {}
+</script>
+</body>
+</html>
