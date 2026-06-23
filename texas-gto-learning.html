@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>德州扑克 GTO 学习工坊</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --felt: #0b6e4f;
+    --felt-dark: #064d37;
+    --gold: #f5c542;
+    --gold-soft: #ffe08a;
+    --ink: #0d1b16;
+    --paper: #f4f7f5;
+    --red: #e74c3c;
+    --blue: #3498db;
+  }
+
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(245,197,66,0.10), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(52,152,219,0.10), transparent 40%),
+      linear-gradient(160deg, #08231a 0%, #0b3325 50%, #061d16 100%);
+    color: var(--paper);
+    min-height: 100vh;
+    padding: 16px;
+    line-height: 1.6;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  /* ===== Header ===== */
+  header { text-align: center; margin-bottom: 18px; }
+  .title {
+    font-size: clamp(24px, 6vw, 40px);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 2px 0 #7a5a00, 0 0 18px rgba(245,197,66,0.35);
+    letter-spacing: 1px;
+  }
+  .subtitle { color: var(--gold-soft); font-size: clamp(13px, 3vw, 16px); margin-top: 6px; opacity: .9; }
+  .suits { font-size: 22px; letter-spacing: 6px; margin-top: 6px; }
+  .suits .r { color: #ff6b6b; } .suits .b { color: #eaeaea; }
+
+  /* ===== Tabs ===== */
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    margin: 18px 0;
+  }
+  .tab {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(245,197,66,0.35);
+    color: var(--paper);
+    padding: 9px 14px; border-radius: 999px; cursor: pointer;
+    font-size: 14px; font-weight: 600; transition: all .2s; white-space: nowrap;
+  }
+  .tab:hover { background: rgba(245,197,66,0.18); }
+  .tab.active { background: var(--gold); color: var(--ink); border-color: var(--gold); box-shadow: 0 4px 14px rgba(245,197,66,0.35); }
+
+  .panel { display: none; animation: fade .35s ease; }
+  .panel.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px; padding: 18px; margin-bottom: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .card h2 { color: var(--gold); font-size: 19px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card h3 { color: var(--gold-soft); font-size: 16px; margin: 14px 0 6px; }
+  .card p { margin-bottom: 8px; }
+  .muted { opacity: .8; font-size: 14px; }
+  .lead { font-size: 15px; }
+  strong.k { color: var(--gold); }
+  .pill { display:inline-block; background: rgba(52,152,219,.18); border:1px solid rgba(52,152,219,.45); color:#bfe3ff; padding:1px 9px; border-radius:999px; font-size:12px; margin:2px; }
+
+  /* ===== Concept accordion ===== */
+  .acc { border-radius: 12px; overflow: hidden; margin-bottom: 10px; border:1px solid rgba(255,255,255,.10); }
+  .acc-head {
+    background: rgba(255,255,255,0.05); padding: 13px 16px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; font-weight: 700;
+    transition: background .2s;
+  }
+  .acc-head:hover { background: rgba(245,197,66,0.12); }
+  .acc-head .arrow { transition: transform .25s; color: var(--gold); }
+  .acc.open .acc-head .arrow { transform: rotate(90deg); }
+  .acc-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; background: rgba(0,0,0,0.15); }
+  .acc.open .acc-body { max-height: 600px; }
+  .acc-body-inner { padding: 14px 16px; font-size: 14.5px; }
+  .acc-body-inner .eg { background: rgba(245,197,66,0.08); border-left: 3px solid var(--gold); padding: 8px 12px; border-radius: 6px; margin-top: 8px; font-size: 13.5px; }
+
+  /* ===== Calculator ===== */
+  .calc-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 10px; }
+  .field { flex: 1; min-width: 120px; }
+  .field label { display: block; font-size: 13px; color: var(--gold-soft); margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; padding: 10px; border-radius: 9px; border: 1px solid rgba(245,197,66,0.35);
+    background: rgba(0,0,0,0.25); color: var(--paper); font-size: 15px;
+  }
+  .result {
+    margin-top: 12px; background: linear-gradient(135deg, rgba(245,197,66,0.14), rgba(52,152,219,0.10));
+    border: 1px solid rgba(245,197,66,0.4); border-radius: 12px; padding: 14px; text-align: center;
+  }
+  .result .big { font-size: 30px; font-weight: 900; color: var(--gold); }
+  .result .lbl { font-size: 13px; opacity: .85; }
+  .result .note { font-size: 13px; margin-top: 6px; opacity: .9; }
+  .bar { height: 12px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin-top:10px; }
+  .bar > span { display:block; height:100%; background: linear-gradient(90deg, var(--gold), #ff8c42); transition: width .4s; }
+
+  /* ===== Range chart ===== */
+  .pos-btns { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .pos-btn { background: rgba(255,255,255,.07); border:1px solid rgba(245,197,66,.3); color:var(--paper); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; }
+  .pos-btn.active { background: var(--gold); color: var(--ink); }
+  .grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; }
+  .cell {
+    aspect-ratio: 1; display:flex; align-items:center; justify-content:center;
+    font-size: clamp(7px, 1.7vw, 11px); font-weight: 700; border-radius: 3px;
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,.45); user-select:none;
+  }
+  .cell.pair { box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+  .cell.in { background: var(--felt); color: #fff; box-shadow: inset 0 0 0 1px rgba(245,197,66,.6); }
+  .cell.in.s { background: #11875f; }
+  .cell.in.o { background: #2a6e9e; }
+  .legend { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:12.5px; }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .sw { width:14px; height:14px; border-radius:3px; display:inline-block; }
+  .range-stat { text-align:center; margin-top:10px; font-size:14px; }
+  .range-stat b { color: var(--gold); font-size: 18px; }
+
+  /* ===== Quiz ===== */
+  .q { margin-bottom: 16px; }
+  .q .qt { font-weight: 700; margin-bottom: 8px; }
+  .opt {
+    display:block; width:100%; text-align:left; padding:11px 14px; margin-bottom:7px;
+    background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,.12);
+    border-radius:10px; color:var(--paper); cursor:pointer; font-size:14px; transition: all .15s;
+  }
+  .opt:hover { background: rgba(245,197,66,0.12); }
+  .opt.correct { background: rgba(46,204,113,0.25); border-color:#2ecc71; }
+  .opt.wrong { background: rgba(231,76,60,0.25); border-color: var(--red); }
+  .opt.disabled { pointer-events:none; opacity:.85; }
+  .explain { font-size:13px; margin-top:6px; padding:8px 12px; border-left:3px solid var(--gold); background:rgba(245,197,66,.08); border-radius:6px; display:none; }
+  .explain.show { display:block; }
+  .quiz-score { text-align:center; font-size:18px; font-weight:700; color:var(--gold); margin-top:10px; }
+
+  /* ===== Roadmap ===== */
+  .step { display:flex; gap:14px; margin-bottom:14px; }
+  .step .num {
+    flex:0 0 38px; height:38px; border-radius:50%; background:var(--gold); color:var(--ink);
+    font-weight:900; display:flex; align-items:center; justify-content:center; font-size:17px;
+  }
+  .step .body h3 { margin:4px 0 4px; }
+  .tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+
+  footer { text-align:center; opacity:.6; font-size:12.5px; margin:24px 0 8px; }
+  a { color: var(--gold-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">♠ 德州扑克 GTO 学习工坊 ♦</div>
+    <div class="subtitle">从概念到计算，再到起手牌范围与实战 —— 系统地学懂博弈论最优策略</div>
+    <div class="suits"><span class="r">♥</span><span class="b">♠</span><span class="r">♦</span><span class="b">♣</span></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="intro">📘 入门概念</button>
+    <button class="tab" data-tab="calc">🧮 核心计算器</button>
+    <button class="tab" data-tab="range">🎴 起手牌范围</button>
+    <button class="tab" data-tab="quiz">🎯 自测练习</button>
+    <button class="tab" data-tab="road">🗺️ 学习路径</button>
+  </nav>
+
+  <!-- ===================== INTRO ===================== -->
+  <section class="panel active" id="intro">
+    <div class="card">
+      <h2>💡 什么是 GTO？</h2>
+      <p class="lead"><strong class="k">GTO（Game Theory Optimal，博弈论最优）</strong>是一种<strong>无法被剥削</strong>的策略。
+        它不追求"针对某个对手赚最多"，而是让自己<strong>无懈可击</strong>——无论对手怎么打，都无法在长期占你便宜。</p>
+      <p class="muted">对比一下两种思路：</p>
+      <p><span class="pill">GTO（防守）</span> 打出平衡策略，对手做什么都无法剥削我。适合面对强敌、不了解对手时。</p>
+      <p><span class="pill">Exploitative（剥削）</span> 针对对手的漏洞最大化收益。能赢更多，但自己也会露出破绽。</p>
+      <p class="muted">学习路线通常是：<strong>先用 GTO 打好地基</strong>（不犯大错），<strong>再学会在对手犯错时偏离 GTO 去剥削</strong>。</p>
+    </div>
+
+    <div class="card">
+      <h2>🧩 必须吃透的 8 个核心概念</h2>
+      <p class="muted" style="margin-bottom:12px;">点击每一项展开，配有例子。这些是后面计算器和范围表的基础。</p>
+
+      <div class="acc" data-c>
+        <div class="acc-head">① 用"范围"思考，而不是单一手牌 <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          高手不会想"对手有没有 AA"，而是想"对手这条线路下的<strong>所有可能手牌组合</strong>是什么"。一切决策都基于范围 vs 范围的对抗。
+          <div class="eg">例：对手在 UTG 加注，他的范围大概是约 15% 最强的起手牌（见"起手牌范围"标签），而不是某一手具体牌。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">② 底池赔率（Pot Odds） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          跟注需要的最低胜率 = <strong>跟注额 ÷（最终底池 + 跟注额）</strong>。只要你的胜率高于这个数，跟注长期就盈利。
+          <div class="eg">例：底池 100，对手下注 50。你跟 50 去赢 150，所需胜率 = 50÷200 = <strong>25%</strong>。用"核心计算器"自己算。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">③ 最小防守频率（MDF） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          面对下注，你需要<strong>继续（跟注/加注）的最低比例</strong>，否则对手用任意两张牌诈唬都能盈利。
+          <strong>MDF = 底池 ÷（底池 + 下注额）</strong>。
+          <div class="eg">例：对手全池下注（下注=底池），MDF = 1÷2 = <strong>50%</strong>，即你至少要守住一半的范围不弃牌。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">④ 价值与诈唬的平衡（Balance） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          下注范围里要按比例混入诈唬，让对手"跟也不是、弃也不是"（无差异）。河牌全池下注的最优比例约为 <strong>价值 : 诈唬 = 2 : 1</strong>；下注越小，诈唬占比越低。
+          <div class="eg">在"核心计算器"里调下注尺度，看价值/诈唬比例怎么变化。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">⑤ 阻断牌（Blockers） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          你手里的牌会<strong>减少</strong>对手拿到某些牌的组合数。诈唬时选能阻断对手强牌的牌；抓诈时选不阻断对手诈唬的牌。
+          <div class="eg">例：同花面诈唬时，手握 A♠（对应同花的 A）能阻断对手的坚果同花，让诈唬更安全。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">⑥ 位置（Position） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          后行动（in position）= 永远比对手多一手信息。位置越好，可玩的范围越宽、越主动。这就是为什么按钮位（BTN）能开池近一半的牌，而枪口位（UTG）只能开很紧的牌。
+          <div class="eg">在"起手牌范围"里切换不同位置，直观看到范围由紧到松的变化。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">⑦ 下注尺度（Bet Sizing） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          GTO 用不同尺度承载不同目的：小注（1/3 池）高频施压、保护权益；大注/超池榨取价值、最大化弃牌率。尺度和你的范围结构要匹配。
+          <div class="eg">同一块牌面，可能存在多种尺度的混合策略，而不是永远一个尺寸。</div>
+        </div></div>
+      </div>
+
+      <div class="acc" data-c>
+        <div class="acc-head">⑧ 混合策略（Mixed Strategy） <span class="arrow">▶</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          同一手牌在同一情形下，GTO 可能让你"<strong>X% 加注、Y% 跟注、Z% 弃牌</strong>"。这种随机化让对手无法读懂你，是 GTO 不可剥削的关键。solver 输出的频率就是这个意思。
+          <div class="eg">例：某块牌面 AJs 可能是"60% 下注、40% 过牌"，靠掷骰子式随机执行。</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CALCULATORS ===================== -->
+  <section class="panel" id="calc">
+    <div class="card">
+      <h2>🧮 底池赔率计算器</h2>
+      <p class="muted">输入当前底池和对手下注额，算出你跟注需要的最低胜率。</p>
+      <div class="calc-row">
+        <div class="field"><label>当前底池</label><input id="po-pot" type="number" value="100" min="0"></div>
+        <div class="field"><label>对手下注额</label><input id="po-bet" type="number" value="50" min="0"></div>
+      </div>
+      <div class="result">
+        <div class="lbl">跟注所需最低胜率</div>
+        <div class="big" id="po-out">25%</div>
+        <div class="bar"><span id="po-bar" style="width:25%"></span></div>
+        <div class="note" id="po-note">你跟注 50 去赢 150，胜率高于 25% 长期盈利。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🛡️ 最小防守频率（MDF）计算器</h2>
+      <p class="muted">面对下注，你至少要守住多少比例的范围，才能不被任意两张牌诈唬剥削。</p>
+      <div class="calc-row">
+        <div class="field"><label>当前底池</label><input id="mdf-pot" type="number" value="100" min="0"></div>
+        <div class="field"><label>对手下注额</label><input id="mdf-bet" type="number" value="100" min="0"></div>
+      </div>
+      <div class="result">
+        <div class="lbl">最小防守频率 MDF</div>
+        <div class="big" id="mdf-out">50%</div>
+        <div class="bar"><span id="mdf-bar" style="width:50%"></span></div>
+        <div class="note" id="mdf-note">对手诈唬的盈亏平衡弃牌率为 50%。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚖️ 价值 / 诈唬 平衡计算器</h2>
+      <p class="muted">河牌下注时，让对手对跟注"无差异"的最优诈唬比例。调节下注尺度看变化。</p>
+      <div class="calc-row">
+        <div class="field"><label>当前底池</label><input id="bv-pot" type="number" value="100" min="0"></div>
+        <div class="field"><label>你的下注额</label><input id="bv-bet" type="number" value="100" min="0"></div>
+      </div>
+      <div class="result">
+        <div class="lbl">最优 价值 : 诈唬 比例</div>
+        <div class="big" id="bv-out">2 : 1</div>
+        <div class="note" id="bv-note">下注范围里诈唬约占 33%（每 2 注价值配 1 注诈唬）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RANGE CHART ===================== -->
+  <section class="panel" id="range">
+    <div class="card">
+      <h2>🎴 翻前开池（RFI）起手牌范围</h2>
+      <p class="muted">切换位置，观察"该位置首个进池加注"的牌力范围。位置越靠后，范围越宽。绿色=同花，蓝色=非同花，描金边=入选。</p>
+      <div class="pos-btns" id="pos-btns"></div>
+      <div class="grid" id="grid"></div>
+      <div class="range-stat">该范围约占全部起手牌的 <b id="range-pct">--</b>（<span id="range-combos">--</span> 个组合）</div>
+      <div class="legend">
+        <span><i class="sw" style="background:#11875f"></i>同花 (suited)</span>
+        <span><i class="sw" style="background:#2a6e9e"></i>非同花 (offsuit)</span>
+        <span><i class="sw" style="background:var(--felt);box-shadow:inset 0 0 0 1px rgba(245,197,66,.6)"></i>对子 / 入选</span>
+        <span><i class="sw" style="background:rgba(255,255,255,.08)"></i>弃牌</span>
+      </div>
+      <p class="muted" style="margin-top:12px; font-size:12.5px;">※ 此为 6-max 简化示意范围，用于建立直觉。真实 GTO 范围含混合频率，请以 solver / GTO Wizard 为准。</p>
+    </div>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section class="panel" id="quiz">
+    <div class="card">
+      <h2>🎯 概念自测（6 题）</h2>
+      <p class="muted" style="margin-bottom:14px;">选择答案后立即显示对错与解析。</p>
+      <div id="quiz-box"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ===================== ROADMAP ===================== -->
+  <section class="panel" id="road">
+    <div class="card">
+      <h2>🗺️ 五阶段学习路径</h2>
+
+      <div class="step"><div class="num">1</div><div class="body">
+        <h3>打牢基础规则与术语</h3>
+        <p class="muted">熟练掌握牌型大小、位置、行动顺序、翻前/翻后结构。先成为一个"不犯规则性错误"的玩家。</p>
+      </div></div>
+
+      <div class="step"><div class="num">2</div><div class="body">
+        <h3>掌握扑克数学</h3>
+        <p class="muted">底池赔率、底池权益、MDF、价值/诈唬比例、隐含赔率。用本工具的"核心计算器"反复练到形成直觉。</p>
+      </div></div>
+
+      <div class="step"><div class="num">3</div><div class="body">
+        <h3>背熟起手牌范围</h3>
+        <p class="muted">先把各位置的开池 / 3-bet / 跟注范围练熟（见"起手牌范围"标签），让翻前几乎不用思考。</p>
+      </div></div>
+
+      <div class="step"><div class="num">4</div><div class="body">
+        <h3>用 solver 训练翻后</h3>
+        <p class="muted">通过 GTO 求解器学习翻后的下注尺度、频率与平衡。先看典型牌面的策略，再做"模拟对抗→复盘偏差"训练。</p>
+        <div class="tools">
+          <span class="pill">GTO Wizard（入门友好/在线）</span>
+          <span class="pill">PioSOLVER（专业）</span>
+          <span class="pill">GTO+（性价比）</span>
+          <span class="pill">Flopzilla（范围/权益分析）</span>
+        </div>
+      </div></div>
+
+      <div class="step"><div class="num">5</div><div class="body">
+        <h3>实战 + 复盘 + 学会剥削</h3>
+        <p class="muted">把训练成果带到牌桌，用 HUD/记录复盘自己偏离 GTO 的地方；当对手出现明显漏洞时，主动偏离 GTO 去剥削以赚取额外价值。</p>
+      </div></div>
+    </div>
+
+    <div class="card">
+      <h2>📌 高效学习的几条建议</h2>
+      <p>• <strong>少而精地刷题</strong>：每天精研 2–3 个典型场景，胜过囫囵看一堆视频。</p>
+      <p>• <strong>先频率后例外</strong>：先掌握"大多数情况怎么打"，再钻研边缘的混合策略。</p>
+      <p>• <strong>记录手牌</strong>：把疑难手牌存下来，用 solver 还原标准答案并对照。</p>
+      <p>• <strong>理解而非死记</strong>：知道"为什么这样打"，换块牌面才迁移得动。</p>
+    </div>
+  </section>
+
+  <footer>♠♥♦♣ 德州扑克 GTO 学习工坊 · 仅作学习用途，请理性娱乐 ♣♦♥♠</footer>
+</div>
+
+<script>
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- Accordion ---------- */
+document.querySelectorAll('.acc').forEach(a => {
+  a.querySelector('.acc-head').addEventListener('click', () => a.classList.toggle('open'));
+});
+
+/* ---------- Calculators ---------- */
+function fmtPct(x){ return (Math.round(x*1000)/10) + '%'; }
+
+function calcPotOdds(){
+  const pot = Math.max(0, +document.getElementById('po-pot').value || 0);
+  const bet = Math.max(0, +document.getElementById('po-bet').value || 0);
+  const total = pot + bet + bet; // final pot after you call
+  const eq = bet > 0 ? bet / (pot + bet + bet) : 0;
+  document.getElementById('po-out').textContent = fmtPct(eq);
+  document.getElementById('po-bar').style.width = Math.min(100, eq*100) + '%';
+  document.getElementById('po-note').textContent =
+    `你跟注 ${bet} 去赢 ${pot + bet}，胜率高于 ${fmtPct(eq)} 长期盈利。`;
+}
+['po-pot','po-bet'].forEach(id => document.getElementById(id).addEventListener('input', calcPotOdds));
+
+function calcMDF(){
+  const pot = Math.max(0, +document.getElementById('mdf-pot').value || 0);
+  const bet = Math.max(0, +document.getElementById('mdf-bet').value || 0);
+  const mdf = (pot + bet) > 0 ? pot / (pot + bet) : 0;
+  const foldBE = (pot + bet) > 0 ? bet / (pot + bet) : 0;
+  document.getElementById('mdf-out').textContent = fmtPct(mdf);
+  document.getElementById('mdf-bar').style.width = Math.min(100, mdf*100) + '%';
+  document.getElementById('mdf-note').textContent =
+    `对手诈唬的盈亏平衡弃牌率为 ${fmtPct(foldBE)}，所以你至少要守住 ${fmtPct(mdf)} 的范围。`;
+}
+['mdf-pot','mdf-bet'].forEach(id => document.getElementById(id).addEventListener('input', calcMDF));
+
+function calcBV(){
+  const pot = Math.max(0, +document.getElementById('bv-pot').value || 0);
+  const bet = Math.max(0, +document.getElementById('bv-bet').value || 0);
+  // villain required equity = bet / (pot + 2*bet) = bluff fraction of betting range
+  const bluffFrac = (pot + 2*bet) > 0 ? bet / (pot + 2*bet) : 0;
+  const valueFrac = 1 - bluffFrac;
+  const ratio = bluffFrac > 0 ? (valueFrac / bluffFrac) : 0;
+  document.getElementById('bv-out').textContent =
+    bluffFrac > 0 ? (Math.round(ratio*10)/10) + ' : 1' : '— : —';
+  document.getElementById('bv-note').textContent =
+    `下注范围里诈唬约占 ${fmtPct(bluffFrac)}（每 ${Math.round(ratio*10)/10} 注价值配 1 注诈唬）。`;
+}
+['bv-pot','bv-bet'].forEach(id => document.getElementById(id).addEventListener('input', calcBV));
+
+calcPotOdds(); calcMDF(); calcBV();
+
+/* ---------- Range chart ---------- */
+const R = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+const idx = Object.fromEntries(R.map((r,i)=>[r,i]));
+
+// token expander: "TT+","AJs+","A5s-A2s","KQo","ATo+","T9s"
+function expand(tokens){
+  const set = new Set();
+  tokens.forEach(tok => {
+    let m;
+    if(/^([AKQJT2-9])\1\+$/.test(tok)){ // pairs +
+      const r = tok[0], start = idx[r];
+      for(let i=0;i<=start;i++) set.add(R[i]+R[i]);
+    } else if(/^([AKQJT2-9])([AKQJT2-9])([so])\+$/.test(tok)){ // suited/offsuit +
+      m = tok.match(/^([AKQJT2-9])([AKQJT2-9])([so])\+$/);
+      const hi=idx[m[1]], lo=idx[m[2]], suf=m[3];
+      for(let k=lo;k>hi;k--) set.add(m[1]+R[k]+suf); // kicker from lo up to just below hi
+    } else if(/^([AKQJT2-9])([AKQJT2-9])([so])-([AKQJT2-9])([AKQJT2-9])([so])$/.test(tok)){ // range same top
+      m = tok.match(/^([AKQJT2-9])([AKQJT2-9])([so])-([AKQJT2-9])([AKQJT2-9])([so])$/);
+      const hi=idx[m[1]], k1=idx[m[2]], k2=idx[m[5]], suf=m[3];
+      const a=Math.min(k1,k2), b=Math.max(k1,k2);
+      for(let k=a;k<=b;k++) set.add(m[1]+R[k]+suf);
+    } else if(/^([AKQJT2-9])\1$/.test(tok)){ // single pair
+      set.add(tok);
+    } else { // single combo like "T9s","KQo"
+      set.add(tok);
+    }
+  });
+  return set;
+}
+
+const POSITIONS = {
+  'UTG 枪口': ['22+','ATs+','A5s-A4s','KTs+','QTs+','JTs','T9s','98s','AJo+','KQo'],
+  'MP 中位': ['22+','A9s+','A5s-A2s','KTs+','QTs+','J9s+','T9s','98s','87s','AJo+','KQo','KJo'],
+  'CO 关煞': ['22+','A2s+','K9s+','Q9s+','J9s+','T8s+','97s+','86s+','76s','65s','54s','ATo+','KTo+','QTo+','JTo'],
+  'BTN 按钮': ['22+','A2s+','K2s+','Q6s+','J7s+','T7s+','96s+','85s+','75s+','64s+','54s','A2o+','K8o+','Q9o+','J9o+','T9o','98o'],
+  'SB 小盲': ['22+','A2s+','K5s+','Q8s+','J8s+','T8s+','97s+','86s+','75s+','64s+','54s','A7o+','K9o+','Q9o+','J9o+','T9o']
+};
+
+// combos: pair=6, suited=4, offsuit=12; total combos = 1326
+function comboCount(set){
+  let c = 0;
+  set.forEach(h => {
+    if(h.length===2) c += 6;           // pair
+    else if(h.endsWith('s')) c += 4;   // suited
+    else c += 12;                      // offsuit
+  });
+  return c;
+}
+
+function handAt(i,j){
+  if(i===j) return R[i]+R[i];
+  if(i<j) return R[i]+R[j]+'s';   // upper-right suited (higher card = lower index)
+  return R[j]+R[i]+'o';           // lower-left offsuit
+}
+
+function renderGrid(posName){
+  const set = expand(POSITIONS[posName]);
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for(let i=0;i<13;i++){
+    for(let j=0;j<13;j++){
+      const h = handAt(i,j);
+      const d = document.createElement('div');
+      d.className = 'cell';
+      d.textContent = h;
+      if(i===j) d.classList.add('pair');
+      if(set.has(h)){
+        d.classList.add('in');
+        if(i<j) d.classList.add('s');
+        else if(i>j) d.classList.add('o');
+      }
+      grid.appendChild(d);
+    }
+  }
+  const combos = comboCount(set);
+  document.getElementById('range-pct').textContent = (Math.round(combos/1326*1000)/10) + '%';
+  document.getElementById('range-combos').textContent = combos;
+}
+
+const posBtns = document.getElementById('pos-btns');
+Object.keys(POSITIONS).forEach((name,i) => {
+  const b = document.createElement('button');
+  b.className = 'pos-btn' + (i===0?' active':'');
+  b.textContent = name;
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.pos-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderGrid(name);
+  });
+  posBtns.appendChild(b);
+});
+renderGrid(Object.keys(POSITIONS)[0]);
+
+/* ---------- Quiz ---------- */
+const QUIZ = [
+  {
+    q: '底池 100，对手下注 50。你跟注至少需要多少胜率才有利可图？',
+    opts: ['约 25%','约 33%','约 50%','约 20%'],
+    correct: 0,
+    exp: '跟注 50 去赢 150，所需胜率 = 50 ÷（100+50+50）= 50÷200 = 25%。'
+  },
+  {
+    q: '对手在底池里下了一个"全池下注"（下注额=底池）。你的最小防守频率 MDF 是？',
+    opts: ['33%','50%','67%','100%'],
+    correct: 1,
+    exp: 'MDF = 底池 ÷（底池+下注）= 1 ÷（1+1）= 50%。守住不到一半就会被任意牌诈唬剥削。'
+  },
+  {
+    q: 'GTO 策略的核心目标是什么？',
+    opts: ['针对每个对手赚到最多','让自己无法被对手剥削','永远下注最大尺度','只玩最强的起手牌'],
+    correct: 1,
+    exp: 'GTO 追求"不可剥削"的平衡策略；"针对对手赚最多"是剥削性打法。'
+  },
+  {
+    q: '河牌做一个全池下注时，价值与诈唬的最优比例约为？',
+    opts: ['1 : 1','3 : 1','2 : 1','4 : 1'],
+    correct: 2,
+    exp: '全池下注让对手所需跟注胜率为 1/3，因此诈唬约占 1/3，即价值:诈唬 ≈ 2:1。下注越小，诈唬占比越低。'
+  },
+  {
+    q: '"阻断牌（blocker）"的作用是？',
+    opts: ['增加自己中牌的概率','减少对手拿到某些特定牌的组合数','让底池变大','提高自己的位置'],
+    correct: 1,
+    exp: '你手中的牌会占用牌堆，从而减少对手能组成某些强牌/诈唬的组合数，影响双方范围。'
+  },
+  {
+    q: '为什么按钮位（BTN）能比枪口位（UTG）打更宽的范围？',
+    opts: ['按钮位筹码更多','按钮位翻后永远后行动、信息更多','按钮位发牌更好','规则要求'],
+    correct: 1,
+    exp: '位置带来信息优势：BTN 翻后总是最后行动，可以打更宽、更主动的范围。'
+  }
+];
+
+const box = document.getElementById('quiz-box');
+let answered = 0, right = 0;
+QUIZ.forEach((item, qi) => {
+  const div = document.createElement('div');
+  div.className = 'q';
+  div.innerHTML = `<div class="qt">${qi+1}. ${item.q}</div>`;
+  item.opts.forEach((opt, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => {
+      const all = div.querySelectorAll('.opt');
+      all.forEach(o => o.classList.add('disabled'));
+      if(oi === item.correct){ btn.classList.add('correct'); right++; }
+      else { btn.classList.add('wrong'); all[item.correct].classList.add('correct'); }
+      div.querySelector('.explain').classList.add('show');
+      answered++;
+      if(answered === QUIZ.length){
+        document.getElementById('quiz-score').textContent = `✅ 完成！得分 ${right} / ${QUIZ.length}`;
+      }
+    });
+    div.appendChild(btn);
+  });
+  const ex = document.createElement('div');
+  ex.className = 'explain';
+  ex.textContent = '解析：' + item.exp;
+  div.appendChild(ex);
+  box.appendChild(div);
+});
+</script>
+</body>
+</html>
