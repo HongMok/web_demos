@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Demos · 德州扑克 GTO 学习合集</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--gold:#f5c542;--goldsoft:#ffe08a;--paper:#eef3f0;--ink:#0d1b16;}
+  body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%,rgba(245,197,66,.10),transparent 40%),
+      radial-gradient(circle at 85% 90%,rgba(61,134,198,.12),transparent 42%),
+      linear-gradient(160deg,#08231a,#0b3325 55%,#061d16);
+    color:var(--paper);min-height:100vh;padding:24px 16px;line-height:1.6;}
+  .wrap{max-width:880px;margin:0 auto;}
+  header{text-align:center;margin:14px 0 26px;}
+  h1{font-size:clamp(24px,6vw,42px);color:var(--gold);font-weight:900;text-shadow:0 2px 0 #7a5a00,0 0 18px rgba(245,197,66,.3);}
+  .sub{color:var(--goldsoft);margin-top:8px;font-size:clamp(13px,3vw,16px);}
+  .suits{font-size:22px;letter-spacing:6px;margin-top:8px;}
+  .suits .r{color:#ff6b6b;} .suits .b{color:#eaeaea;}
+
+  .grp-title{color:var(--gold);font-size:15px;font-weight:700;margin:22px 6px 10px;letter-spacing:1px;
+    border-left:4px solid var(--gold);padding-left:10px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;}
+  a.demo{display:block;text-decoration:none;color:var(--paper);
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    border-radius:16px;padding:18px;transition:all .2s;position:relative;overflow:hidden;}
+  a.demo:hover{transform:translateY(-3px);border-color:rgba(245,197,66,.5);
+    background:rgba(245,197,66,.1);box-shadow:0 8px 22px rgba(0,0,0,.35);}
+  a.demo .emo{font-size:30px;}
+  a.demo h2{color:var(--gold);font-size:18px;margin:8px 0 6px;}
+  a.demo p{font-size:13.5px;opacity:.85;}
+  a.demo .go{margin-top:10px;font-size:13px;color:var(--goldsoft);font-weight:700;}
+  .tag{display:inline-block;background:rgba(61,134,198,.2);border:1px solid rgba(61,134,198,.45);
+    color:#bfe3ff;font-size:11px;padding:1px 8px;border-radius:999px;margin-top:6px;}
+  footer{text-align:center;opacity:.55;font-size:12.5px;margin:30px 0 10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>♠ 德州扑克 GTO 学习合集 ♦</h1>
+    <div class="sub">从概念、起手牌范围到阻断牌 —— 一套可交互、可打印的图表式教程</div>
+    <div class="suits"><span class="r">♥</span><span class="b">♠</span><span class="r">♦</span><span class="b">♣</span></div>
+  </header>
+
+  <div class="grp-title">🃏 德州扑克 GTO 教程</div>
+  <div class="cards">
+    <a class="demo" href="texas-gto-learning.html">
+      <div class="emo">📘</div>
+      <h2>GTO 学习工坊（总览）</h2>
+      <p>8 个核心概念 + 底池赔率/MDF/价值诈唬计算器 + 起手牌矩阵 + 自测。入门从这里开始。</p>
+      <span class="tag">互动</span>
+      <div class="go">进入 →</div>
+    </a>
+    <a class="demo" href="preflop-range-tutorial.html">
+      <div class="emo">🎴</div>
+      <h2>翻牌前起手牌范围速记</h2>
+      <p>三色记忆法,一张图记住 50 / 100 / 300bb 下各位置的开池范围。可打印做背诵卡。</p>
+      <span class="tag">速记图表</span>
+      <div class="go">进入 →</div>
+    </a>
+    <a class="demo" href="blockers-tutorial.html">
+      <div class="emo">🚧</div>
+      <h2>阻断牌 Blockers 图表教学</h2>
+      <p>可点击的"组合网格":选对手牌型、点你的牌,实时看组合数下降。讲透诈唬/抓诈选牌。</p>
+      <span class="tag">互动</span>
+      <div class="go">进入 →</div>
+    </a>
+  </div>
+
+  <div class="grp-title">🎮 其他 Demo</div>
+  <div class="cards">
+    <a class="demo" href="candy-math-game.html">
+      <div class="emo">🍬</div>
+      <h2>糖果小镇减法大冒险</h2>
+      <p>面向一年级的互动减法游戏。</p>
+      <div class="go">进入 →</div>
+    </a>
+  </div>
+
+  <footer>♠♥♦♣ web_demos · GitHub Pages ♣♦♥♠</footer>
+</div>
+</body>
+</html>
