@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTO 翻牌前起手牌范围 · 50/100/300bb 速记图表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --bg1:#08231a; --bg2:#0b3325; --paper:#eef3f0; --gold:#f5c542; --goldsoft:#ffe08a;
+    --green:#1f9d6a; --yellow:#e6b53c; --blue:#3d86c6; --fold:rgba(255,255,255,.05);
+    --ink:#0d1b16;
+  }
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',Arial,sans-serif;
+    background:linear-gradient(160deg,#08231a,#0b3325 55%,#061d16);
+    color:var(--paper); padding:18px 14px; line-height:1.6;
+  }
+  .wrap{max-width:1000px; margin:0 auto;}
+  header{text-align:center; margin-bottom:20px;}
+  h1{font-size:clamp(22px,5vw,36px); color:var(--gold); text-shadow:0 2px 0 #7a5a00; font-weight:900;}
+  .sub{color:var(--goldsoft); margin-top:6px; font-size:clamp(13px,3vw,16px);}
+  section{background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10);
+    border-radius:16px; padding:18px; margin-bottom:18px;}
+  h2{color:var(--gold); font-size:20px; margin-bottom:10px; display:flex; gap:8px; align-items:center;}
+  h3{color:var(--goldsoft); font-size:16px; margin:12px 0 6px;}
+  p{margin-bottom:8px;} .muted{opacity:.85; font-size:14px;}
+  strong.k{color:var(--gold);}
+  .principle{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:10px;}
+  .principle .pc{background:rgba(0,0,0,.18); border-radius:12px; padding:14px; border-left:4px solid var(--gold);}
+  .principle .pc b{color:var(--gold); display:block; margin-bottom:4px; font-size:15px;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:16px; margin:6px 0 4px; font-size:14px; align-items:center;}
+  .legend span{display:inline-flex; gap:6px; align-items:center;}
+  .sw{width:16px; height:16px; border-radius:4px; display:inline-block;}
+  .sw.g{background:var(--green);} .sw.y{background:var(--yellow);} .sw.b{background:var(--blue);} .sw.f{background:var(--fold); box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);}
+
+  /* charts grid layout */
+  .charts{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;}
+  .chart{background:rgba(0,0,0,.18); border-radius:14px; padding:14px;}
+  .chart .ttl{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .chart .ttl .name{font-size:18px; font-weight:800; color:var(--gold);}
+  .chart .ttl .pcts{font-size:12.5px; opacity:.85;}
+  .chart .hook{font-size:13px; opacity:.9; margin-bottom:8px; min-height:34px;}
+  .grid{display:grid; grid-template-columns:repeat(13,1fr); gap:2px;}
+  .cell{aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:clamp(6px,1.5vw,10px); font-weight:700; border-radius:3px;
+    background:var(--fold); color:rgba(255,255,255,.4);}
+  .cell.g{background:var(--green); color:#fff;}
+  .cell.y{background:var(--yellow); color:#3a2c00;}
+  .cell.b{background:var(--blue); color:#fff;}
+  .cell.pair{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55);}
+  .barwrap{display:flex; height:10px; border-radius:6px; overflow:hidden; margin-top:8px; background:rgba(255,255,255,.08);}
+  .barwrap i{display:block; height:100%;}
+
+  /* cheat table */
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:6px;}
+  th,td{border:1px solid rgba(255,255,255,.14); padding:8px 10px; text-align:left;}
+  th{background:rgba(245,197,66,.16); color:var(--gold);}
+  td .tag{font-weight:700;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.03);}
+
+  .rule{background:rgba(0,0,0,.18); border-radius:12px; padding:14px; margin-bottom:10px; border-left:4px solid var(--blue);}
+  .rule.short{border-color:#e07a3c;} .rule.deep{border-color:var(--blue);} .rule.std{border-color:var(--green);}
+  .rule b{font-size:15px;}
+  ul{margin:6px 0 6px 20px;} li{margin-bottom:4px; font-size:14px;}
+  .key{display:inline-block; background:rgba(52,134,198,.2); border:1px solid rgba(52,134,198,.5);
+    padding:0 7px; border-radius:6px; font-size:12.5px; margin:1px;}
+  footer{text-align:center; opacity:.6; font-size:12.5px; margin:20px 0 8px;}
+  @media print{ body{background:#fff; color:#000;} section,.chart,.rule,.principle .pc{background:#fff; border-color:#ccc;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>♠ GTO 翻牌前起手牌范围速记图表 ♦</h1>
+    <div class="sub">一张图记住 50 / 100 / 300bb 下各位置的开池范围 —— 六人桌 (6-max) RFI</div>
+  </header>
+
+  <!-- ============ 原理 ============ -->
+  <section>
+    <h2>🧠 先懂原理：码量为什么改变范围</h2>
+    <p class="muted">范围的<strong>骨架(高牌)几乎不变</strong>,真正随码量伸缩的是<strong class="k">投机性同花牌</strong>。记住三条原理,你就能推导而不是死背:</p>
+    <div class="principle">
+      <div class="pc"><b>① 隐含赔率 (码越深越值钱)</b>同花连张、小对子靠"偶尔中坚果赢一大笔"盈利。筹码越深,中了能赢越多 → <strong>深码加同花投机牌</strong>。</div>
+      <div class="pc"><b>② 反隐含赔率 (码越深越危险)</b>被支配的 offsuit 牌 (KJo/QJo/AJo) 中了顶对常被更大牌打爆。<strong>深码反而要降低这些牌的频率</strong>。</div>
+      <div class="pc"><b>③ 位置杠杆 (越靠后越宽)</b>后位永远多一手信息。所以 UTG 只开 ~16%,而 BTN 能开 ~45%。位置决定宽度,码量决定同花投机牌的多少。</div>
+    </div>
+    <p class="muted" style="margin-top:10px;">⚠️ 注意:RFI(开池)范围受码量影响其实<strong>较小</strong>;码量影响最大的是 <span class="key">3-bet</span><span class="key">4-bet</span><span class="key">冷跟注</span><span class="key">全下阈值</span>。本表聚焦最该先背熟的开池范围。</p>
+  </section>
+
+  <!-- ============ 三色记忆法 ============ -->
+  <section>
+    <h2>🎨 三色记忆法（核心）</h2>
+    <p>别背 15 张表。<strong class="k">每个位置只背 1 张三色表</strong>,码量决定你"开到第几种颜色":</p>
+    <div class="legend" style="margin-top:8px;">
+      <span><i class="sw g"></i><b>绿 = 核心</b>(50bb 起就开)</span>
+      <span><i class="sw y"></i><b>黄 = 标准加牌</b>(100bb 加上)</span>
+      <span><i class="sw b"></i><b>蓝 = 深码加牌</b>(300bb 再加上)</span>
+      <span><i class="sw f"></i>灰 = 弃牌</span>
+    </div>
+    <table>
+      <tr><th>码量</th><th>你开的颜色</th><th>一句话</th></tr>
+      <tr><td><span class="tag">50bb (浅)</span></td><td><i class="sw g"></i> 只开绿</td><td>砍掉投机牌,只留硬高牌 + 主力同花连张</td></tr>
+      <tr><td><span class="tag">100bb (标准)</span></td><td><i class="sw g"></i><i class="sw y"></i> 绿 + 黄</td><td>标准 GTO 范围,大多数桌的默认</td></tr>
+      <tr><td><span class="tag">300bb (深)</span></td><td><i class="sw g"></i><i class="sw y"></i><i class="sw b"></i> 绿 + 黄 + 蓝</td><td>加同花投机牌博隐含赔率;同时降低 offsuit 被支配牌的频率</td></tr>
+    </table>
+  </section>
+
+  <!-- ============ 五个位置图表 ============ -->
+  <section>
+    <h2>🎴 五个位置的三色范围表</h2>
+    <p class="muted">行=高张,列=低张;右上三角=同花(s),左下三角=非同花(o),对角线=对子。点不了,纯背图。</p>
+    <div class="charts" id="charts"></div>
+  </section>
+
+  <!-- ============ 速记口诀表 ============ -->
+  <section>
+    <h2>⚡ 速记口诀表</h2>
+    <table>
+      <tr><th>位置</th><th>50/100/300bb 开池%</th><th>记忆抓手</th></tr>
+      <tr><td><b>UTG 枪口</b></td><td>13 / 16 / 18%</td><td>最紧。<strong>只开硬牌</strong>:对子全开、AJ⁺/KQ、同花连张只到 T9s。黄=补齐同花A+KJo;蓝=87s/76s/65s 等同花连张</td></tr>
+      <tr><td><b>MP 中位</b></td><td>14 / 19 / 21%</td><td>比 UTG 略宽。加 KJo/QJo、98s、更多小同花K/Q。蓝=小同花连张 + ATo</td></tr>
+      <tr><td><b>CO 关煞</b></td><td>19 / 24 / 28%</td><td>打开了。<strong>全部对子 + 全部同花A</strong>、宽同花K、同花连张到 65s、offsuit broadway 入场</td></tr>
+      <tr><td><b>BTN 按钮</b></td><td>30 / 42 / 50%</td><td>最宽,近一半牌。几乎所有同花 + 大量 offsuit (A2o⁺/K9o⁺/Q9o⁺)。蓝=同花单/双张缺口</td></tr>
+      <tr><td><b>SB 小盲</b></td><td>23 / 31 / 37%</td><td>只对抗 BB 但要 OOP,采<strong>加注或弃牌</strong>。宽度近 CO/BTN 之间,offsuit 略收</td></tr>
+    </table>
+    <p class="muted" style="margin-top:8px;">※ 百分比为 6-max 简化示意值(不同 solver / 抽水设定会有 ±2% 出入),重在记住<strong>相对宽窄与三色结构</strong>,而非精确到个位。</p>
+  </section>
+
+  <!-- ============ 调整规则 ============ -->
+  <section>
+    <h2>📐 三档码量的调整规则（背完图再看这个就通了）</h2>
+
+    <div class="rule short">
+      <b>🔻 50bb（浅码）：砍投机、留高牌</b>
+      <ul>
+        <li>削掉<strong>最依赖隐含赔率</strong>的牌:小同花连张/缺口张 (65s、54s、小 Kxs/Qxs)。</li>
+        <li>小对子价值下降(中set赢不到一整叠),靠后位仍开,前位可适当收。</li>
+        <li>高牌、offsuit broadway 相对保值,因为靠摊牌价值与弃牌率盈利。</li>
+        <li>3-bet 更<strong>极化/直接全下</strong>,因为筹码浅、更容易一把定胜负。</li>
+      </ul>
+    </div>
+
+    <div class="rule std">
+      <b>⚖️ 100bb（标准）：默认基准</b>
+      <ul>
+        <li>就是大多数图表与训练软件的默认范围 = <strong>绿 + 黄</strong>。</li>
+        <li>先把这一档背到不用思考,它是其他两档的"原点"。</li>
+      </ul>
+    </div>
+
+    <div class="rule deep">
+      <b>🔺 300bb（深码）：加同花、减被支配 offsuit</b>
+      <ul>
+        <li><strong>加宽同花投机牌</strong>(蓝色):同花连张、同花缺口张、弱同花 A/K —— 隐含赔率巨大,中坚果同花/顺子能赢整叠。</li>
+        <li><strong>降低</strong> KJo / QJo / AJo 这类<strong>被支配 offsuit</strong> 的频率(反隐含赔率,中顶对易被打爆)。</li>
+        <li><strong>位置价值放大</strong>:IP(BTN/CO)更敢拓宽;OOP(SB/UTG)反而要更克制。</li>
+        <li>多用<strong>冷跟注/慢打</strong>,3-bet 更线性、更谨慎,避免浅范围被深筹码惩罚。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 背诵顺序 ============ -->
+  <section>
+    <h2>🧭 建议的背诵顺序</h2>
+    <ul>
+      <li><strong>第一步</strong>:先背 <span class="key">100bb BTN</span> 和 <span class="key">100bb UTG</span> —— 一最宽一最紧,建立两端锚点。</li>
+      <li><strong>第二步</strong>:补 CO / MP / SB,它们都落在两个锚点之间。</li>
+      <li><strong>第三步</strong>:对每个位置,记住"<strong>砍黄=50bb,加蓝=300bb</strong>"两个动作即可,不用单独背。</li>
+      <li><strong>第四步</strong>:再去学 3-bet / 防守 / 4-bet 范围 —— 那才是码量影响真正大的地方。</li>
+    </ul>
+  </section>
+
+  <footer>♠♥♦♣ GTO 翻牌前范围速记表 · 六人桌示意范围,实战请以 solver / GTO Wizard 校准 · 仅供学习 ♣♦♥♠</footer>
+</div>
+
+<script>
+const R=["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+const idx=Object.fromEntries(R.map((r,i)=>[r,i]));
+function expand(tokens){const set=new Set();tokens.forEach(tok=>{let m;
+ if(/^([AKQJT2-9])\1\+$/.test(tok)){const s=idx[tok[0]];for(let i=0;i<=s;i++)set.add(R[i]+R[i]);}
+ else if((m=tok.match(/^([AKQJT2-9])\1-([AKQJT2-9])\2$/))){let a=idx[m[1]],b=idx[m[2]];if(a>b)[a,b]=[b,a];for(let i=a;i<=b;i++)set.add(R[i]+R[i]);}
+ else if((m=tok.match(/^([AKQJT2-9])([AKQJT2-9])([so])\+$/))){const hi=idx[m[1]],lo=idx[m[2]];for(let k=lo;k>hi;k--)set.add(m[1]+R[k]+m[3]);}
+ else if((m=tok.match(/^([AKQJT2-9])([AKQJT2-9])([so])-([AKQJT2-9])([AKQJT2-9])\3$/))){const k1=idx[m[2]],k2=idx[m[5]];const a=Math.min(k1,k2),b=Math.max(k1,k2);for(let k=a;k<=b;k++)set.add(m[1]+R[k]+m[3]);}
+ else set.add(tok);});return set;}
+function combos(set){let c=0;set.forEach(h=>{if(h.length===2)c+=6;else if(h.endsWith("s"))c+=4;else c+=12;});return c;}
+
+const POS={
+ "UTG 枪口":{hook:"最紧。只开硬牌:大对子、强 A、KQ。",
+  G:["22+","A9s+","A5s-A4s","KTs+","QTs+","JTs","T9s","AQo+","KQo"],
+  Y:["A8s-A6s","A3s-A2s","98s","AJo","KJo"],
+  B:["87s","76s","65s","K9s","Q9s","J9s"]},
+ "MP 中位":{hook:"略宽。加 KJo/QJo、98s、更多小同花 K/Q。",
+  G:["22+","A8s+","A5s-A4s","KTs+","QTs+","JTs","T9s","98s","AJo+","KQo"],
+  Y:["A7s-A6s","A3s-A2s","K9s","Q9s","J9s","87s","KJo","QJo"],
+  B:["76s","65s","54s","K8s","Q8s","J8s","ATo"]},
+ "CO 关煞":{hook:"打开。全对子 + 全同花 A、宽同花 K、同花连张到 65s。",
+  G:["22+","A2s+","K9s+","Q9s+","J9s+","T9s","98s","ATo+","KJo+","QJo"],
+  Y:["K7s-K8s","Q8s","J8s","T8s","87s","76s","65s","KTo","QTo","JTo"],
+  B:["K5s-K6s","Q7s","J7s","T7s","97s","86s","75s","54s","A9o"]},
+ "BTN 按钮":{hook:"最宽,近一半牌。几乎全同花 + 大量 offsuit。",
+  G:["22+","A2s+","K5s+","Q8s+","J8s+","T8s+","97s+","86s+","76s","65s","54s","A7o+","K9o+","Q9o+","JTo"],
+  Y:["K2s-K4s","Q6s-Q7s","J7s","T7s","75s","64s","53s","A2o-A6o","K8o","Q8o","J9o","T9o","98o"],
+  B:["Q4s-Q5s","J5s-J6s","T6s","96s","85s","74s","43s","K6o-K7o","Q7o","J8o","T8o","87o"]},
+ "SB 小盲":{hook:"对抗 BB 但 OOP,加注或弃牌;宽度近 CO/BTN 之间。",
+  G:["22+","A2s+","K7s+","Q9s+","J9s+","T9s","98s","A8o+","KTo+","QJo"],
+  Y:["K5s-K6s","Q8s","J8s","T8s","87s","76s","65s","54s","A5o-A7o","K9o","QTo","JTo"],
+  B:["K2s-K4s","Q6s-Q7s","J7s","T7s","97s","86s","75s","64s","A2o-A4o"]}
+};
+
+function handAt(i,j){ if(i===j) return R[i]+R[i]; if(i<j) return R[i]+R[j]+"s"; return R[j]+R[i]+"o"; }
+
+const host=document.getElementById("charts");
+for(const [name,r] of Object.entries(POS)){
+  const G=expand(r.G), Y=expand([...r.G,...r.Y]), B=expand([...r.G,...r.Y,...r.B]);
+  const p50=(combos(G)/1326*100).toFixed(0), p100=(combos(Y)/1326*100).toFixed(0), p300=(combos(B)/1326*100).toFixed(0);
+  const card=document.createElement("div"); card.className="chart";
+  let cells="";
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+    const h=handAt(i,j); let cls="cell"; if(i===j)cls+=" pair";
+    if(G.has(h))cls+=" g"; else if(Y.has(h))cls+=" y"; else if(B.has(h))cls+=" b";
+    cells+=`<div class="${cls}">${h}</div>`;
+  }
+  card.innerHTML=`
+    <div class="ttl"><span class="name">${name}</span>
+      <span class="pcts">50→<b style="color:var(--green)">${p50}%</b> · 100→<b style="color:var(--yellow)">${p100}%</b> · 300→<b style="color:var(--blue)">${p300}%</b></span></div>
+    <div class="hook">${r.hook}</div>
+    <div class="grid">${cells}</div>
+    <div class="barwrap">
+      <i style="width:${p50}%;background:var(--green)"></i>
+      <i style="width:${p100-p50}%;background:var(--yellow)"></i>
+      <i style="width:${p300-p100}%;background:var(--blue)"></i>
+    </div>`;
+  host.appendChild(card);
+}
+</script>
+</body>
+</html>
