@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阻断牌 Blockers · 图表教学</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--gold:#f5c542;--goldsoft:#ffe08a;--paper:#eef3f0;--green:#1f9d6a;--red:#e85d5d;--blue:#3d86c6;--ink:#0d1b16;}
+  body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',Arial,sans-serif;
+    background:linear-gradient(160deg,#08231a,#0b3325 55%,#061d16);color:var(--paper);
+    padding:18px 14px;line-height:1.65;}
+  .wrap{max-width:920px;margin:0 auto;}
+  header{text-align:center;margin-bottom:20px;}
+  h1{font-size:clamp(22px,5vw,36px);color:var(--gold);text-shadow:0 2px 0 #7a5a00;font-weight:900;}
+  .sub{color:var(--goldsoft);margin-top:6px;font-size:clamp(13px,3vw,16px);}
+  section{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;padding:18px;margin-bottom:18px;}
+  h2{color:var(--gold);font-size:20px;margin-bottom:10px;display:flex;gap:8px;align-items:center;}
+  h3{color:var(--goldsoft);font-size:15.5px;margin:14px 0 6px;}
+  p{margin-bottom:8px;} .muted{opacity:.85;font-size:14px;}
+  strong.k{color:var(--gold);}
+  .big-idea{background:rgba(245,197,66,.1);border-left:4px solid var(--gold);border-radius:10px;padding:12px 14px;margin:10px 0;}
+
+  /* playing cards */
+  .card-pic{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+    width:38px;height:52px;background:#fff;border-radius:6px;margin:2px;font-weight:900;
+    box-shadow:0 2px 5px rgba(0,0,0,.4);position:relative;font-size:15px;line-height:1;}
+  .card-pic.r{color:#d62828;} .card-pic.b{color:#1a1a2e;}
+  .card-pic small{font-size:14px;}
+  .card-pic.dead{opacity:.28;filter:grayscale(1);}
+  .card-pic.dead::after{content:"";position:absolute;left:8%;right:8%;top:48%;height:3px;background:#d62828;transform:rotate(-18deg);}
+  .card-pic.mine{outline:3px solid var(--gold);outline-offset:1px;}
+
+  /* interactive combo grid */
+  .demo{background:rgba(0,0,0,.2);border-radius:14px;padding:14px;margin-top:10px;}
+  .targets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .tbtn{background:rgba(255,255,255,.07);border:1px solid rgba(245,197,66,.35);color:var(--paper);
+    padding:7px 13px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;}
+  .tbtn.active{background:var(--gold);color:var(--ink);}
+  .holdrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 14px;}
+  .holdrow .lbl{font-size:13px;opacity:.8;}
+  .hcard{cursor:pointer;width:34px;height:46px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,.4);user-select:none;transition:transform .1s;}
+  .hcard.r{color:#d62828;} .hcard.b{color:#1a1a2e;}
+  .hcard.on{outline:3px solid var(--gold);transform:translateY(-3px);}
+  .cgrid{display:inline-grid;gap:4px;margin:6px 0;}
+  .ccell{width:clamp(38px,11vw,54px);height:clamp(30px,8vw,40px);border-radius:6px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;font-size:clamp(9px,2.4vw,12px);font-weight:700;
+    background:var(--green);color:#fff;line-height:1.05;}
+  .ccell.suited{background:#0e7a8a;box-shadow:inset 0 0 0 2px var(--gold);}
+  .ccell.dead{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);text-decoration:line-through;box-shadow:none;}
+  .counter{margin-top:12px;font-size:15px;}
+  .counter b{color:var(--gold);font-size:26px;}
+  .counter .red{color:var(--red);font-weight:800;}
+  .hint{font-size:12.5px;opacity:.7;margin-top:6px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px;}
+  th,td{border:1px solid rgba(255,255,255,.14);padding:8px 10px;text-align:center;}
+  th{background:rgba(245,197,66,.16);color:var(--gold);}
+  tr:nth-child(even) td{background:rgba(255,255,255,.03);}
+  td.big{font-weight:800;color:var(--gold);}
+
+  .twocol{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:8px;}
+  .usecase{border-radius:12px;padding:14px;}
+  .usecase.bluff{background:rgba(232,93,93,.1);border-left:4px solid var(--red);}
+  .usecase.catch{background:rgba(61,134,198,.1);border-left:4px solid var(--blue);}
+  .usecase b{font-size:15px;display:block;margin-bottom:4px;}
+  .usecase.bluff b{color:#ff9a9a;} .usecase.catch b{color:#9fc8f0;}
+
+  .eg{background:rgba(0,0,0,.18);border-radius:10px;padding:12px;margin-top:10px;}
+  .eg .board{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+  ul{margin:6px 0 6px 20px;} li{margin-bottom:5px;font-size:14px;}
+  .key{display:inline-block;background:rgba(245,197,66,.16);border:1px solid rgba(245,197,66,.4);
+    padding:0 7px;border-radius:6px;font-size:12.5px;margin:1px;color:var(--goldsoft);}
+  footer{text-align:center;opacity:.6;font-size:12.5px;margin:20px 0 8px;}
+  @media print{body{background:#fff;color:#000;}section,.demo,.eg{background:#fff;border-color:#ccc;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🚧 阻断牌 Blockers · 图表教学</h1>
+    <div class="sub">用"组合数网格"一眼看懂:你拿一张牌，对手的牌少了多少</div>
+  </header>
+
+  <!-- ===== 概念 ===== -->
+  <section>
+    <h2>💡 一句话原理</h2>
+    <div class="big-idea">
+      一副牌只有 52 张。<strong class="k">你手里拿着的牌，对手就不可能拿到。</strong>
+      所以你的两张底牌会<strong>减少对手能组成某些牌型的组合数(combos)</strong>——这就是阻断牌(也叫卡牌)。
+    </div>
+    <p class="muted">关键不是"有没有"阻断，而是<strong>阻断了多少组合</strong>。下面这张可点击的网格，是理解阻断牌的核心。</p>
+  </section>
+
+  <!-- ===== 互动组合网格 ===== -->
+  <section>
+    <h2>🎛️ 互动组合网格（先玩这个）</h2>
+    <p class="muted">选一个"对手可能的牌型"，再点击你手里拿了哪些牌（最多 2 张），看对手的组合数怎么掉。</p>
+    <div class="demo">
+      <div class="targets" id="targets"></div>
+      <div class="holdrow"><span class="lbl">👉 点击你拿的牌：</span><span id="holds"></span></div>
+      <div id="gridhost"></div>
+      <div class="counter" id="counter"></div>
+      <div class="hint" id="hint"></div>
+    </div>
+  </section>
+
+  <!-- ===== 降幅表 ===== -->
+  <section>
+    <h2>📊 阻断效率速查表</h2>
+    <p class="muted">同样拿 1 张阻断牌，砍掉的比例差别很大。<strong class="k">阻断对子最狠（砍一半）；阻断"必须含某张牌的坚果"可以直接清零。</strong></p>
+    <table>
+      <tr><th>对手的特定牌型</th><th>原始组合</th><th>你拿 1 张阻断后</th><th>降幅</th></tr>
+      <tr><td>特定对子（如 AA）</td><td>6</td><td class="big">3</td><td class="big">−50%</td></tr>
+      <tr><td>特定同花（如 A♠K♠）</td><td>4</td><td>3</td><td>−25%</td></tr>
+      <tr><td>特定非同花（如 AKo）</td><td>12</td><td>9</td><td>−25%</td></tr>
+      <tr><td>某牌型合计（AK 全部）</td><td>16</td><td>12</td><td>−25%</td></tr>
+      <tr><td>坚果同花（必须含 A♠）</td><td>多个</td><td class="big">0</td><td class="big">−100%</td></tr>
+    </table>
+    <p class="hint">※ 拿 2 张阻断更狠：拿 A♠A♥ → 对手 AA 只剩 1 个组合（A♦A♣）；拿 A♠K♠ → AK 从 16 掉到 9。</p>
+  </section>
+
+  <!-- ===== 两种相反用法 ===== -->
+  <section>
+    <h2>⚔️ 两种相反的用法（最容易记错）</h2>
+    <p class="muted">阻断牌不是"越多越好"，关键是<strong>阻断"对谁有用"</strong>。同一张牌，诈唬时是宝，抓诈时可能是废。</p>
+    <div class="twocol">
+      <div class="usecase bluff">
+        <b>🔴 诈唬时 → 阻断对手的「强牌（会跟注的牌）」</b>
+        <p>你想让对手弃牌。拿着能阻断他<strong>坚果/价值牌</strong>的牌 → 他有强牌的概率下降 → 诈唬更容易过。</p>
+      </div>
+      <div class="usecase catch">
+        <b>🔵 抓诈时 → 别阻断对手的「诈唬牌」</b>
+        <p>你用中等牌跟注抓诈。你<strong>希望他多诈唬</strong>，所以别拿掉他用来诈唬的牌；最好你的牌能<strong>阻断他的价值牌</strong>。</p>
+      </div>
+    </div>
+
+    <div class="eg">
+      <h3>🃏 例 1（诈唬）：河牌三张黑桃，你想代表同花</h3>
+      <div class="board">牌面：<span class="card-pic b">K<small>♠</small></span><span class="card-pic r">8<small>♥</small></span><span class="card-pic b">4<small>♠</small></span><span class="card-pic b">J<small>♠</small></span><span class="card-pic b">2<small>♠</small></span></div>
+      <p>你手里有 <span class="card-pic b mine">A<small>♠</small></span> → 对手的<strong>坚果同花组合直接归零</strong>（坚果同花必须含 A♠）。这张 A♠ 是绝佳的诈唬阻断牌：对手几乎不可能有最强牌来抓你。</p>
+    </div>
+
+    <div class="eg">
+      <h3>🃏 例 2（抓诈）：你拿对子在河牌面对全下</h3>
+      <p>对手可能的诈唬是<strong>错失的同花听牌</strong>。这时你<strong>不想</strong>手里有同花的牌（那会阻断他的诈唬，让他诈唬变少、你跟注变差）。
+      你更希望自己的牌<strong>阻断他的价值顺子/同花</strong>，同时不挡他的诈唬 —— 这样的牌是更好的"抓诈器(bluff-catcher)"。</p>
+    </div>
+  </section>
+
+  <!-- ===== 翻前应用 ===== -->
+  <section>
+    <h2>♠ 翻前最实用的应用：为什么 A5s 是顶级诈唬牌</h2>
+    <p>这是阻断牌在翻前最常考的点。当你想做一个 <span class="key">4-bet 诈唬</span> 或 <span class="key">3-bet 诈唬</span> 时，手里的那张 <strong class="k">A</strong> 会同时阻断对手最强的牌：</p>
+    <div class="eg">
+      <div class="board">你拿：<span class="card-pic r mine">A<small>♥</small></span><span class="card-pic r mine">5<small>♥</small></span></div>
+      <ul>
+        <li>你的 A♥ <strong>阻断对手的 AA</strong>：6 → 3 个组合（少一半）。</li>
+        <li>你的 A♥ <strong>阻断对手的 AK</strong>：16 → 12 个组合。</li>
+        <li>= 对手能强力反打你的<strong>顶级牌组合大幅减少</strong>，你的诈唬更安全。</li>
+        <li>同时 A5s 是<strong>同花 + 能成轮子顺</strong>，万一被跟注还有可玩性、还能中坚果。</li>
+      </ul>
+      <p class="muted">这就是为什么 GTO 选 <span class="key">A5s / A4s</span>（而不是 72o）当诈唬牌：<strong>带阻断 + 有可玩性</strong>，两个条件都满足。</p>
+    </div>
+  </section>
+
+  <!-- ===== 口诀 ===== -->
+  <section>
+    <h2>🧭 实战选牌口诀</h2>
+    <table>
+      <tr><th>你在做什么</th><th>想要的阻断</th><th>原因</th></tr>
+      <tr><td>🔴 诈唬 / 半诈唬</td><td>阻断对手的<strong>强牌/坚果</strong></td><td>让他更少有牌跟，弃牌率更高</td></tr>
+      <tr><td>🔵 抓诈（用中等牌跟）</td><td><strong>不</strong>阻断对手的<strong>诈唬</strong>；最好阻断其价值</td><td>让他保持诈唬，你跟注才赚钱</td></tr>
+      <tr><td>🟢 价值下注</td><td>不在乎阻断</td><td>你反而希望他有牌来跟你</td></tr>
+      <tr><td>♠ 翻前轻 3/4-bet</td><td>手握 <strong>A</strong>（阻断 AA/AK）</td><td>A5s/A4s 之所以是标准诈唬牌</td></tr>
+    </table>
+    <div class="big-idea" style="margin-top:14px;">
+      <strong class="k">总记忆点：</strong>阻断对子效率最高（砍一半）；阻断坚果同花/特定顺子可清零。
+      <strong>诈唬挡他的强牌，抓诈别挡他的诈唬。</strong>
+    </div>
+  </section>
+
+  <footer>♠♥♦♣ 阻断牌 Blockers 图表教学 · 仅供学习 · 浏览器打开即用，可 Ctrl/Cmd+P 打印 ♣♦♥♠</footer>
+</div>
+
+<script>
+const SUITS=[{s:"♠",c:"b"},{s:"♥",c:"r"},{s:"♦",c:"r"},{s:"♣",c:"b"}];
+
+// targets: define which two ranks / mode
+const TARGETS={
+  "AK（非对子）":{mode:"unpaired",hi:"A",lo:"K"},
+  "AA（对子）":{mode:"pair",hi:"A"},
+  "坚果同花（必含 A♠）":{mode:"flush"}
+};
+let curTarget="AK（非对子）";
+let held=new Set();   // card ids like "A♠"
+
+const targetsEl=document.getElementById("targets");
+Object.keys(TARGETS).forEach((name,i)=>{
+  const b=document.createElement("button");
+  b.className="tbtn"+(i===0?" active":"");
+  b.textContent=name;
+  b.onclick=()=>{document.querySelectorAll(".tbtn").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");curTarget=name;held.clear();render();};
+  targetsEl.appendChild(b);
+});
+
+function relevantCards(){
+  const t=TARGETS[curTarget];
+  let ranks=[];
+  if(t.mode==="unpaired") ranks=[t.hi,t.lo];
+  else if(t.mode==="pair") ranks=[t.hi];
+  else ranks=["A"]; // flush: only A♠ matters but show all aces
+  const cards=[];
+  ranks.forEach(rk=>SUITS.forEach(su=>cards.push({id:rk+su.s,rk,su})));
+  return cards;
+}
+
+function toggleHold(id){
+  if(held.has(id)) held.delete(id);
+  else { if(held.size>=2) return; held.add(id); }
+  render();
+}
+
+function render(){
+  const t=TARGETS[curTarget];
+  // hold buttons
+  const holds=document.getElementById("holds"); holds.innerHTML="";
+  relevantCards().forEach(c=>{
+    const d=document.createElement("div");
+    d.className="hcard "+c.su.c+(held.has(c.id)?" on":"");
+    d.innerHTML=c.rk+"<span style='font-size:11px'>"+c.su.s+"</span>";
+    d.onclick=()=>toggleHold(c.id);
+    holds.appendChild(d);
+  });
+
+  const host=document.getElementById("gridhost"); host.innerHTML="";
+  const counter=document.getElementById("counter");
+  const hint=document.getElementById("hint");
+
+  if(t.mode==="unpaired"){
+    const grid=document.createElement("div");
+    grid.className="cgrid"; grid.style.gridTemplateColumns="repeat(4,auto)";
+    let total=0,suited=0;
+    for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+      const aId=t.hi+SUITS[r].s, kId=t.lo+SUITS[c].s;
+      const dead=held.has(aId)||held.has(kId);
+      const isS=(r===c);
+      const cell=document.createElement("div");
+      cell.className="ccell"+(isS?" suited":"")+(dead?" dead":"");
+      cell.innerHTML=`<span class='${SUITS[r].c==="r"?"":""}'>${t.hi}${SUITS[r].s}</span><span>${t.lo}${SUITS[c].s}</span>`;
+      cell.style.color=dead?"":"#fff";
+      grid.appendChild(cell);
+      if(!dead){total++; if(isS)suited++;}
+    }
+    host.appendChild(grid);
+    counter.innerHTML=`对手 ${t.hi}${t.lo} 还剩 <b>${total}</b> / 16 个组合 `+
+      `<span class='muted'>(同花 ${suited}，非同花 ${total-suited})</span>`+
+      (held.size?` — 你阻断了 <span class='red'>${16-total}</span> 个`:``);
+    hint.textContent="对角线（描金边）= 同花组合；其余 = 非同花。拿一张 A 砍掉一整行，拿一张 K 砍掉一整列。";
+  }
+  else if(t.mode==="pair"){
+    const pairs=[];for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)pairs.push([i,j]);
+    const grid=document.createElement("div");
+    grid.className="cgrid"; grid.style.gridTemplateColumns="repeat(3,auto)";
+    let total=0;
+    pairs.forEach(p=>{
+      const id1=t.hi+SUITS[p[0]].s, id2=t.hi+SUITS[p[1]].s;
+      const dead=held.has(id1)||held.has(id2);
+      const cell=document.createElement("div");
+      cell.className="ccell"+(dead?" dead":"");
+      cell.innerHTML=`<span>${t.hi}${SUITS[p[0]].s}</span><span>${t.hi}${SUITS[p[1]].s}</span>`;
+      grid.appendChild(cell);
+      if(!dead)total++;
+    });
+    host.appendChild(grid);
+    counter.innerHTML=`对手 ${t.hi}${t.hi} 还剩 <b>${total}</b> / 6 个组合`+
+      (held.size?` — 你阻断了 <span class='red'>${6-total}</span> 个`:``);
+    hint.textContent="对子只有 6 个组合，拿 1 张就砍掉一半（→3），拿 2 张只剩 1 个。阻断对子是效率最高的阻断！";
+  }
+  else { // flush
+    const has=held.has("A♠");
+    const grid=document.createElement("div");
+    grid.className="cgrid"; grid.style.gridTemplateColumns="repeat(1,auto)";
+    const cell=document.createElement("div");
+    cell.className="ccell"+(has?" dead":" suited");
+    cell.style.width="auto"; cell.style.padding="0 16px";
+    cell.innerHTML=has?"坚果同花 = 0":"坚果同花存在";
+    grid.appendChild(cell);
+    host.appendChild(grid);
+    counter.innerHTML=has
+      ? `你拿着 A♠ → 对手坚果同花 <b class='red' style='color:var(--red)'>0</b> 个组合（直接清零！）`
+      : `坚果同花需要 <b>A♠</b>。你没拿 → 对手可能有坚果同花。点上面的 A♠ 试试。`;
+    hint.textContent="坚果牌往往'必须含某一张特定牌'。只要那张牌在你手里，对手就一个组合都没有——这是最强的阻断。";
+  }
+}
+render();
+</script>
+</body>
+</html>
